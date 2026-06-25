@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Environment
+.env
+.venv/
+venv/
+
+# Local data (user profiles, caches)
+data/*
+!data/.gitkeep
+!data/README.md
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Colab checkpoints
+.ipynb_checkpoints/
