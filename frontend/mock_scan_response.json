@@ -1,0 +1,15 @@
+{
+  "scan_id": "mock-001",
+  "books": [
+    { "title": "Red Rising", "author": "Pierce Brown", "genre": "Science Fiction", "year": 2014, "pages": 382, "rank": 1, "is_top_pick": true },
+    { "title": "Project Hail Mary", "author": "Andy Weir", "genre": "Science Fiction", "year": 2021, "pages": 476, "rank": 2, "is_top_pick": false },
+    { "title": "Piranesi", "author": "Susanna Clarke", "genre": "Fantasy", "year": 2020, "pages": 245, "rank": 3, "is_top_pick": false },
+    { "title": "The Hitchhiker's Guide to the Galaxy", "author": "Douglas Adams", "genre": "Science Fiction", "year": 1979, "pages": 224, "rank": 4, "is_top_pick": false },
+    { "title": "Flowers for Algernon", "author": "Daniel Keyes", "genre": "Science Fiction", "year": 1966, "pages": 311, "rank": 5, "is_top_pick": false },
+    { "title": "Rebecca", "author": "Daphne du Maurier", "genre": "Gothic Fiction", "year": 1938, "pages": 448, "rank": 6, "is_top_pick": false },
+    { "title": "The Curious Incident of the Dog in the Night-Time", "author": "Mark Haddon", "genre": "Literary Fiction", "year": 2003, "pages": 272, "rank": 7, "is_top_pick": false },
+    { "title": "Normal People", "author": "Sally Rooney", "genre": "Literary Fiction", "year": 2018, "pages": 273, "rank": 8, "is_top_pick": false },
+    { "title": "Sapiens", "author": "Yuval Noah Harari", "genre": "Non-fiction", "year": 2011, "pages": 443, "rank": 9, "is_top_pick": false },
+    { "title": "The Alchemist", "author": "Paulo Coelho", "genre": "Fiction", "year": 1988, "pages": 208, "rank": 10, "is_top_pick": false }
+  ]
+}
