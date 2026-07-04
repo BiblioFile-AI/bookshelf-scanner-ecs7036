@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookscanner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- SCREEN 1: Scan -->
+  <main class="screen" id="scan-screen">
+    <header>
+      <h1>Scan a shelf</h1>
+      <p class="subtitle">Take a photo of any bookshelf to get started</p>
+    </header>
+
+    <div class="upload-zone">
+      <img id="photo-preview" alt="" hidden>
+      <span class="upload-icon">📷</span>
+      <p>Tap to take or upload a photo</p>
+    </div>
+
+    <input type="file" id="photo-input" accept="image/*" capture="environment" hidden>
+    <button class="btn-primary" id="main-button">Choose Photo</button>
+  </main>
+
+  <!-- SCREEN 2: Loading -->
+  <main class="screen" id="loading-screen" hidden>
+    <header>
+      <h1>Reading your shelf…</h1>
+      <p class="subtitle">This takes a few seconds</p>
+    </header>
+
+    <div class="spinner"></div>
+    <p class="subtitle">Identifying books… matching to your taste</p>
+  </main>
+
+  <!-- SCREEN 3: Results -->
+  <main class="screen" id="results-screen" hidden>
+    <header>
+      <h1>Your shelf, ranked</h1>
+      <p class="subtitle" id="results-count"></p>
+    </header>
+
+    <div class="card-list" id="card-list"></div>
+
+    <button class="btn-primary" id="scan-again">Scan Another Shelf</button>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
