@@ -2,7 +2,6 @@ import os
 import re
 import tempfile
 import uuid
-
 from flask import Flask, request, jsonify
 
 import knn
