@@ -60,9 +60,10 @@ def save_cache(cache, path=CACHE_PATH):
     path.write_text(json.dumps(cache))
 
 def cache_key(title, author):
+    author = author or ""
     """One key per book request: title and author, case-folded."""
     return f"{title.strip().lower()}|{author.strip().lower()}"
-
+    
 def cache_get(source, title, author):
     """Return the cached record, NOT_FOUND, or None if never fetched."""
     return API_CACHE[source].get(cache_key(title, author))
