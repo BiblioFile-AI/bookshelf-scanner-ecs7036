@@ -66,7 +66,7 @@ def prep_recommendation_data(scanned_books_input, user_profile_input):
     
 
     #Extract unique authors from the profile dataset
-    profile_authors = list(profile_df["authors"].unique())
+    profile_authors = list(profile_df["authors"].dropna().unique())
     
     #Calculate the average and mathematical baseline from the profile
     scaler = metadata_lookup.fit_profile_scaler(profile_df)

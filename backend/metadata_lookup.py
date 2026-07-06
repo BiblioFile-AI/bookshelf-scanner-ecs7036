@@ -60,9 +60,10 @@ def save_cache(cache, path=CACHE_PATH):
     path.write_text(json.dumps(cache))
 
 def cache_key(title, author):
+    author = author or ""
     """One key per book request: title and author, case-folded."""
     return f"{title.strip().lower()}|{author.strip().lower()}"
-
+    
 def cache_get(source, title, author):
     """Return the cached record, NOT_FOUND, or None if never fetched."""
     return API_CACHE[source].get(cache_key(title, author))
@@ -557,3 +558,54 @@ def build_feature_vectors(df, genre_labels, profile_authors, scaler):
         "year_z": z_scores[:, 1],
     }, index=df.index)
     return vectors[VECTOR_COLUMNS]
+
+def build_user_profile(liked_books, api_key=None):
+    """Build a user's taste profile from their liked books.
+
+    Parameters
+    ----------
+    liked_books : list of (title, author, genre_label) triples
+        The books the user says they enjoyed - ten at onboarding,
+        more as they save books. The genre label comes from Katy's
+        classifier and must use the agreed spelling.
+    api_key : str or None
+        Google Books API key, passed through to the metadata pipeline.
+
+    Returns
+    -------
+    dict with the profile's four parts:
+        "books"    - the liked list itself (source of truth for rebuilds),
+        "metadata" - the cleaned metadata table, one row per confirmed book,
+        "scaler"   - StandardScaler fitted on THESE books' pages and years,
+        "authors"  - the profile authors (drives the known_author flag),
+        "vectors"  - one feature vector per book, VECTOR_COLUMNS order:
+                     this is the pile of vectors Alexa's ranker consumes.
+
+    A liked book that neither source can confirm is dropped with a
+    warning: a profile entry without metadata could never be a vector.
+    """
+    lookups = [(title, author) for title, author, _ in liked_books]
+    meta = apply_fallback(build_metadata_table(lookups, api_key=api_key))
+    meta["genre"] = [genre for _, _, genre in liked_books]  # rows keep list order
+    meta, dropped = apply_missing_data_policy(meta)
+    if dropped:
+        print(f"[PROFILE] {dropped} liked book(s) could not be confirmed - left out")
+
+    scaler = fit_profile_scaler(meta)
+    authors = list(meta["authors"])
+    vectors = build_feature_vectors(meta, meta["genre"], authors, scaler)
+    return {"books": list(liked_books), "metadata": meta,
+            "scaler": scaler, "authors": authors, "vectors": vectors}
+
+
+def add_book_to_profile(profile, title, author, genre_label, api_key=None):
+    """Add one saved book and return the rebuilt profile.
+
+    Rebuilding from the book list (rather than appending a vector) is
+    deliberate: the scaler is fitted on the profile, so a new book shifts
+    the profile's mean and spread, and every existing vector must be
+    recomputed on the new scale. Thanks to the response cache the rebuild
+    is cheap - only the newly added book causes a network request.
+    """
+    return build_user_profile(profile["books"] + [(title, author, genre_label)],
+                              api_key=api_key)
