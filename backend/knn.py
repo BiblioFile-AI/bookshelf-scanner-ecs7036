@@ -16,14 +16,8 @@ import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
 
-# ---------------------------------------------------------------------------
+
 # Section 1: Genre taxonomy
-#
-# Kept here as a readable reference — index 0-9 maps to these labels.
-# The pipeline (metadata_lookup.py) owns genre-to-index conversion;
-# this file only consumes the index numbers that arrive in the vectors.
-# The index order MUST match metadata_lookup.GENRE_LABELS exactly.
-# ---------------------------------------------------------------------------
 
 GENRE_LABELS = [
     "Romance",                          # 0
@@ -39,13 +33,8 @@ GENRE_LABELS = [
 ]
 
 
-# ---------------------------------------------------------------------------
+
 # Section 2: Genre similarity matrix
-#
-# A 10x10 symmetric table. Entry [i][j] = how similar genre i is to genre j.
-# Same genre = 1.0. Unrelated = 0.1. Distance = 1 - similarity.
-# Index order must stay in sync with GENRE_LABELS above.
-# ---------------------------------------------------------------------------
 
 def _build_similarity_matrix():
     # Every pair starts unrelated; the diagonal and explicit pairs override this.
@@ -84,10 +73,9 @@ def _build_similarity_matrix():
 GENRE_SIMILARITY = _build_similarity_matrix()
 
 
-# ---------------------------------------------------------------------------
+
 # Section 3: Custom distance function
-#
-# Vector layout (matches metadata_lookup.VECTOR_COLUMNS):
+# Vector layout ():
 #   v[0]  genre_index   : integer 0-9, looked up in GENRE_SIMILARITY
 #   v[1]  known_author  : 1.0 if author is in saved profile, else 0.0
 #   v[2]  pageCount_z   : z-score relative to profile mean/std
@@ -95,13 +83,8 @@ GENRE_SIMILARITY = _build_similarity_matrix()
 #
 # Weights: genre 60%, known_author 20%, page 10%, year 10%.
 #
-# Z-scores are unbounded, so abs(z1-z2) can exceed 1 and would inflate
-# the 10% weight components. tanh squashes any positive value into (0,1):
-#   tanh(0.5) ~ 0.46  (half a std dev apart)
-#   tanh(1.0) ~ 0.76  (one std dev apart)
-#   tanh(2.0) ~ 0.96  (two std devs apart, near max penalty)
+# tanh squashes any positive value into (0,1):
 # This keeps the weights meaningful regardless of scale.
-# ---------------------------------------------------------------------------
 
 def custom_distance(v1, v2):
     """
@@ -109,7 +92,6 @@ def custom_distance(v1, v2):
     Called by sklearn's NearestNeighbors for every pair of vectors.
     """
     # Genre: read index directly from position 0 and look up similarity.
-    # round() guards against any floating-point drift from sklearn internals.
     g1 = int(round(v1[0]))
     g2 = int(round(v2[0]))
     genre_dist = 1.0 - GENRE_SIMILARITY[g1][g2]
@@ -124,9 +106,7 @@ def custom_distance(v1, v2):
     return 0.6 * genre_dist + 0.2 * author_dist + 0.1 * page_dist + 0.1 * year_dist
 
 
-# ---------------------------------------------------------------------------
 # Section 4: Main ranking function
-# ---------------------------------------------------------------------------
 
 def rank_books(saved_vectors, scanned_vectors, scanned_books):
     """
@@ -192,88 +172,3 @@ def rank_books(saved_vectors, scanned_vectors, scanned_books):
     return results
 
 
-# ---------------------------------------------------------------------------
-# Section 5: Test data and demo run
-#
-# Run directly to verify the ranker:  python knn.py
-#
-# Vectors are hand-constructed to match the format metadata_lookup.py
-# produces: [genre_index, known_author, pageCount_z, year_z].
-#
-# Profile: a SciFi/Mystery reader (Andy Weir, Stieg Larsson, Gillian Flynn).
-# Z-scores computed from that profile's statistics:
-#   pageCount: mean=483 pages, std=160
-#   year:      mean=2005,      std=20
-#
-# Expected ranking: SciFi books first, especially Artemis (Andy Weir is a
-# known author). Mystery next. Unrelated genres at the bottom.
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-
-    # Shorthand genre indices for readability in the test vectors below.
-    SCIFI   = 2   # Science Fiction & Fantasy
-    MYSTERY = 1   # Mystery, Thriller & Crime
-    YA      = 4   # Young Adult
-    BIO     = 5   # Biography & Memoir
-    GENERAL = 9   # General & Contemporary Fiction
-
-    # Profile stats used to compute z-scores manually:
-    MEAN_PAGES, STD_PAGES = 483, 160
-    MEAN_YEAR,  STD_YEAR  = 2005, 20
-
-    def pz(pages): return (pages - MEAN_PAGES) / STD_PAGES
-    def yz(year):  return (year  - MEAN_YEAR)  / STD_YEAR
-
-    # --- Saved profile: [genre_index, known_author, pageCount_z, year_z] ---
-    # known_author is 1 for all saved books (they define the known-author set).
-
-    saved_vectors = np.array([
-        [SCIFI,   1, pz(369), yz(2011)],   # The Martian
-        [MYSTERY, 1, pz(422), yz(2012)],   # Gone Girl
-        [SCIFI,   1, pz(688), yz(1965)],   # Dune
-        [MYSTERY, 1, pz(672), yz(2005)],   # The Girl with the Dragon Tattoo
-        [SCIFI,   1, pz(476), yz(2021)],   # Project Hail Mary
-        [GENERAL, 1, pz(273), yz(2018)],   # Normal People
-    ], dtype=float)
-
-    # --- Scanned shelf: known_author=1 only for Artemis (Andy Weir) ---
-
-    scanned_vectors = np.array([
-        [SCIFI,   1, pz(305), yz(2017)],   # Artemis          SciFi + known author
-        [SCIFI,   0, pz(382), yz(2014)],   # Red Rising       SciFi, new author
-        [MYSTERY, 0, pz(460), yz(2014)],   # Big Little Lies  Mystery
-        [YA,      0, pz(374), yz(2008)],   # The Hunger Games YA (SciFi sim=0.6)
-        [BIO,     0, pz(334), yz(2018)],   # Educated         Biography
-        [GENERAL, 0, pz(449), yz(1938)],   # Rebecca          General Fiction, old
-    ], dtype=float)
-
-    scanned_books = [
-        {"title": "Artemis",          "categories": "Science Fiction & Fantasy"},
-        {"title": "Red Rising",       "categories": "Science Fiction & Fantasy"},
-        {"title": "Big Little Lies",  "categories": "Mystery, Thriller & Crime"},
-        {"title": "The Hunger Games", "categories": "Young Adult"},
-        {"title": "Educated",         "categories": "Biography & Memoir"},
-        {"title": "Rebecca",          "categories": "General & Contemporary Fiction"},
-    ]
-
-    ranked = rank_books(saved_vectors, scanned_vectors, scanned_books)
-    ranked_sorted = sorted(ranked, key=lambda b: b["rank"])
-
-    print("=" * 72)
-    print("  BOOKSHELF RECOMMENDER - KNN RESULTS")
-    print("=" * 72)
-    print(f"\n  Scanned shelf ({len(scanned_books)} books) ranked by fit:\n")
-    print(f"  {'Rank':<6}{'Title':<38}{'Genre':<36}{'Top Pick'}")
-    print(f"  {'-'*4:<6}{'-'*36:<38}{'-'*34:<36}{'-'*8}")
-
-    for book in ranked_sorted:
-        top = "** YES **" if book["is_top_pick"] else ""
-        print(
-            f"  {book['rank']:<6}"
-            f"{book['title']:<38}"
-            f"{book['categories']:<36}"
-            f"{top}"
-        )
-
-    print()
