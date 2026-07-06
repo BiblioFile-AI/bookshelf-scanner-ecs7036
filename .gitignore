@@ -234,3 +234,12 @@ data/*
 
 # Colab checkpoints
 .ipynb_checkpoints/
+
+api_key.txt
+
+#Ignore temporary images or user uploads
+backend/data/*.jpeg
+backend/data/*.png
+
+#BUT allow master test fixture to be pushed
+!data/mock_shelf_test.jpeg
