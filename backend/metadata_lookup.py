@@ -143,8 +143,9 @@ def fetch_google_books(title, author, api_key=None, pause=0.5, retries=2):
     if cached is not None:
         return cached # cache hit: no pause, no network call
 
+    query = f'intitle:"{title}" inauthor:"{author}"' if author else f'intitle:"{title}"'
     params = {
-        "q": f'intitle:"{title}" inauthor:"{author}"',
+        "q": query,
         "maxResults": 10, # fetch several editions, pick_best_match chooses
     }
     if api_key:
@@ -236,7 +237,7 @@ def pick_best_ol_doc(docs, query_title, query_author):
     def score(doc):
         s = 0
         authors = " ".join(doc.get("author_name", [])).lower()
-        if query_author.split()[-1].lower() in authors:
+        if query_author and query_author.split()[-1].lower() in authors:
             s += 4
         if doc.get("title", "").strip().lower() == query_title.strip().lower():
             s += 2

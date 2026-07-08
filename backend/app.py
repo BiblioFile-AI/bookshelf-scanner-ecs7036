@@ -4,6 +4,8 @@ import tempfile
 import uuid
 from flask import Flask, request, jsonify
 
+
+# important functions from Katies and Emmas code 
 import knn
 import main_pipeline
 import metadata_lookup
@@ -13,10 +15,9 @@ from storage import load_profile, save_profile, normalize_book
 app = Flask(__name__)
 
 
-# ---------------------------------------------------------------------------
 # CORS — lets the browser fetch from http://localhost:5000 regardless of
 # what origin the frontend HTML is served from (file://, live-server, etc.)
-# ---------------------------------------------------------------------------
+
 
 @app.after_request
 def add_cors_headers(response):
@@ -32,11 +33,9 @@ def handle_preflight():
     return jsonify({}), 200
 
 
-# ---------------------------------------------------------------------------
 # Response serialiser
 # The pipeline stores books in Google Books field names; script.js expects
 # different keys. This function translates one book dict before sending it.
-# ---------------------------------------------------------------------------
 
 def _to_frontend(book):
     pub_date = book.get("publishedDate") or ""
@@ -52,14 +51,13 @@ def _to_frontend(book):
     }
 
 
-# ---------------------------------------------------------------------------
+
 # Profile vector builder
 # main_pipeline.prep_recommendation_data returns only scanned book vectors.
 # This helper runs the same metadata + genre + scaler steps for the saved
 # profile books so KNN has something to compare against.
 # API calls are cached, so if the pipeline already fetched a book this run
 # the second call hits the cache and costs nothing.
-# ---------------------------------------------------------------------------
 
 def _build_profile_vectors(profile_books):
     profile_tuples = [
@@ -98,8 +96,7 @@ def _build_profile_vectors(profile_books):
     ).to_numpy()
 
 
-# ---------------------------------------------------------------------------
-# POST /scan
+
 # Accepts a multipart upload:
 #   shelf_photo  — the bookshelf image (any common image format)
 #   user_id      — form field identifying whose profile to compare against
@@ -111,7 +108,6 @@ def _build_profile_vectors(profile_books):
 #      for BOTH the scanned books AND the user's saved profile
 #   4. knn.rank_books ranks the scanned books against the profile vectors
 #   5. Results are serialised to the field names script.js expects and returned
-# ---------------------------------------------------------------------------
 
 @app.route("/scan", methods=["POST"])
 def scan():
@@ -168,11 +164,11 @@ def scan():
     }), 200
 
 
-# ---------------------------------------------------------------------------
+
 # POST /onboard
 # Stores up to 10 book titles as minimal profile entries (no metadata).
 # These give the KNN something to compare against before the first real scan.
-# ---------------------------------------------------------------------------
+
 
 @app.route("/onboard", methods=["POST"])
 def onboard():
@@ -205,11 +201,11 @@ def onboard():
     }), 200
 
 
-# ---------------------------------------------------------------------------
+
 # POST /save
 # Adds one fully-enriched book (Google Books format) to the user's profile.
 # Duplicate detection is by title — safe to call repeatedly.
-# ---------------------------------------------------------------------------
+
 
 @app.route("/save", methods=["POST"])
 def save():
@@ -243,10 +239,9 @@ def save():
     return jsonify({"message": message, "books": profile["books"]}), 200
 
 
-# ---------------------------------------------------------------------------
+
 # GET /profile?user_id=<id>
 # Returns the user's saved book list.
-# ---------------------------------------------------------------------------
 
 @app.route("/profile", methods=["GET"])
 def profile():
@@ -263,4 +258,4 @@ def profile():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
