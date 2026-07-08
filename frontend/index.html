@@ -8,9 +8,54 @@
 </head>
 <body>
 
+  <!-- Onboarding: Welcome -->
+  <main class="screen" id="welcome-screen" hidden>
+    <img class="bg-motifs" src="bg-scan.svg" alt="">
+    <header>
+      <h1>Welcome to Bookscanner</h1>
+      <p class="subtitle">Before we start, tell us about a few books you've loved. This helps us pick the right recommendations for you.</p>
+    </header>
+    <button class="btn-primary" id="get-started-btn">Get Started</button>
+  </main>
+
+  <!-- Onboarding: Add Books (also used from Library) -->
+  <main class="screen" id="add-books-screen" hidden>
+    <img class="bg-motifs" src="bg-scan.svg" alt="">
+    <header>
+      <h1>Add your favourites</h1>
+      <p class="subtitle">Enter 3 to 10 books you've loved. This builds your taste profile.</p>
+    </header>
+
+    <div class="search-input-wrap">
+      <input type="text" id="book-search-input" placeholder="Search for a title…" autocomplete="off">
+      <div class="suggestions-dropdown" id="suggestions-dropdown" hidden></div>
+    </div>
+
+    <div class="progress-block">
+      <p class="counter" id="profile-counter">0 of 10 added</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="card-list" id="profile-list"></div>
+
+    <button class="btn-primary disabled" id="continue-btn" disabled>Continue</button>
+  </main>
+
+  <!-- Onboarding: Done -->
+  <main class="screen" id="done-screen" hidden>
+    <img class="bg-motifs" src="bg-scan.svg" alt="">
+    <header>
+      <h1>You're all set</h1>
+      <p class="subtitle">Your taste profile is ready. Let's find your next great read.</p>
+    </header>
+    <button class="btn-primary" id="start-scanning-btn">Start Scanning</button>
+  </main>
+
+  <!-- Scan -->
   <main class="screen" id="scan-screen">
     <img class="bg-motifs" src="bg-scan.svg" alt="">
-
     <header>
       <h1>Scan a Shelf</h1>
       <p class="subtitle">Take a photo of any bookshelf to get started:</p>
@@ -26,56 +71,52 @@
     <button class="btn-primary" id="main-button">Choose Photo</button>
   </main>
 
+  <!-- Loading -->
   <main class="screen" id="loading-screen" hidden>
     <img class="bg-motifs" src="bg-scanning.svg" alt="">
-
     <header>
       <h1>Reading your shelf…</h1>
       <p class="subtitle">This takes a few seconds</p>
     </header>
-
     <div class="spinner"></div>
     <p class="subtitle">Identifying books…</p>
   </main>
 
+  <!-- Results -->
   <main class="screen" id="results-screen" hidden>
     <header>
       <h1>Your Shelf, Ranked:</h1>
       <p class="subtitle" id="results-count"></p>
     </header>
-
     <div class="card-list" id="card-list"></div>
-
     <button class="btn-primary" id="scan-again">Scan Another Shelf</button>
   </main>
 
+  <!-- Error -->
   <main class="screen" id="error-screen" hidden>
     <img class="bg-motifs" src="bg-scan.svg" alt="">
-
     <header>
       <h1>Couldn't read that shelf</h1>
     </header>
-
     <p class="subtitle">Something went wrong!<br>Check your connection and try again</p>
-
     <button class="btn-primary" id="error-retry">Try Again</button>
   </main>
 
+  <!-- Empty -->
   <main class="screen" id="empty-screen" hidden>
     <img class="bg-motifs" src="bg-scan.svg" alt="">
-
     <header>
       <h1>No Books Found</h1>
       <p class="subtitle">We couldn't spot any book spines in that photo</p>
     </header>
-
     <button class="btn-primary" id="empty-retry">Try Again</button>
   </main>
 
+  <!-- Library -->
   <main class="screen" id="library-screen" hidden>
     <header>
       <h1>Your Bookshelf</h1>
-      <p class="subtitle">Everything you've saved from shelves</p>
+      <p class="subtitle">Everything you've saved and your reading taste</p>
     </header>
 
     <div class="segmented-control">
@@ -85,7 +126,7 @@
     </div>
 
     <div class="card-list" id="saved-scans-list"></div>
-    <div class="card-list" id="taste-profile-list" hidden></div>
+    <div id="taste-profile-list" hidden></div>
   </main>
 
   <nav class="floating-nav" id="bottom-nav">
