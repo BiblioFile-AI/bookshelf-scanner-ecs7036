@@ -96,40 +96,6 @@ function markOnboarded() {
   localStorage.setItem(ONBOARDED_KEY, 'true');
 }
 
-// ---------- mock search database ----------
-const SEARCH_DB = [
-  { title: "Red Rising", author: "Pierce Brown" },
-  { title: "Project Hail Mary", author: "Andy Weir" },
-  { title: "Piranesi", author: "Susanna Clarke" },
-  { title: "The Hitchhiker's Guide to the Galaxy", author: "Douglas Adams" },
-  { title: "Rebecca", author: "Daphne du Maurier" },
-  { title: "Normal People", author: "Sally Rooney" },
-  { title: "Sapiens", author: "Yuval Noah Harari" },
-  { title: "The Alchemist", author: "Paulo Coelho" },
-  { title: "The Secret History", author: "Donna Tartt" },
-  { title: "Klara and the Sun", author: "Kazuo Ishiguro" },
-  { title: "Beloved", author: "Toni Morrison" },
-  { title: "Wuthering Heights", author: "Emily Brontë" },
-  { title: "Jane Eyre", author: "Charlotte Brontë" },
-  { title: "The Great Gatsby", author: "F. Scott Fitzgerald" },
-  { title: "To Kill a Mockingbird", author: "Harper Lee" },
-  { title: "1984", author: "George Orwell" },
-  { title: "The Name of the Wind", author: "Patrick Rothfuss" },
-  { title: "The Way of Kings", author: "Brandon Sanderson" },
-  { title: "A Little Life", author: "Hanya Yanagihara" },
-  { title: "Little Women", author: "Louisa May Alcott" },
-  { title: "The Song of Achilles", author: "Madeline Miller" },
-  { title: "Circe", author: "Madeline Miller" },
-  { title: "Emma", author: "Jane Austen" },
-  { title: "Pride and Prejudice", author: "Jane Austen" },
-  { title: "Dune", author: "Frank Herbert" },
-  { title: "Educated", author: "Tara Westover" },
-  { title: "The Midnight Library", author: "Matt Haig" },
-  { title: "Where the Crawdads Sing", author: "Delia Owens" },
-  { title: "Flowers for Algernon", author: "Daniel Keyes" },
-  { title: "The Curious Incident of the Dog in the Night-Time", author: "Mark Haddon" }
-];
-
 // ---------- screen navigation ----------
 function hideAllScreens() {
   welcomeScreen.hidden = true;
@@ -231,6 +197,7 @@ async function startScan() {
 
   try {
     await wait(2500);
+    // In the future, this mock file will be replaced by your image scanning backend
     const response = await fetch('mock_scan_response.json');
 
     if (!response.ok) throw new Error(`Server responded ${response.status}`);
@@ -269,7 +236,7 @@ function createBookCard(book) {
     ${book.is_top_pick ? '<span class="top-pick-badge">TOP PICK</span>' : ''}
     <span class="book-title">${book.title}</span>
     <span class="book-author">${book.author}</span>
-    <span class="book-meta">${book.genre} · ${book.year} · ${book.pages} pp</span>
+    <span class="book-meta">${book.genre || 'Unknown Genre'} · ${book.year || 'N/A'} · ${book.pages || '?'} pp</span>
   `;
 
   const star = card.querySelector('.card-star');
@@ -416,34 +383,76 @@ function hideSuggestions() {
   suggestionsDropdown.innerHTML = '';
 }
 
-function renderSuggestions(query) {
+// ---------- Live API Search (Open Library) ----------
+
+let searchTimeout;
+
+// 1. Listen for typing and apply the "Debounce"
+searchInput.addEventListener('input', (e) => {
+  const query = e.target.value;
+
+  clearTimeout(searchTimeout); // Cancel the previous timer
+
   if (!query.trim()) {
     hideSuggestions();
     return;
   }
 
+  // Show a quick loading state so the user knows it's working
+  suggestionsDropdown.innerHTML = `<div class="suggestion-row no-match">Searching library...</div>`;
+  suggestionsDropdown.hidden = false;
+
+  // Wait 400ms after they stop typing before hitting the API
+  searchTimeout = setTimeout(() => {
+    fetchBooksFromAPI(query);
+  }, 400);
+});
+
+// 2. Fetch the live data (Using Open Library API)
+async function fetchBooksFromAPI(query) {
+  try {
+    // Ping the free Open Library database, limiting to 5 results
+    const response = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`);
+    const data = await response.json();
+
+    // Open Library stores its results in an array called "docs"
+    if (!data.docs || data.docs.length === 0) {
+      renderSuggestions([]); 
+      return;
+    }
+
+    // Format the Open Library data into our clean Bookscanner format
+    const liveMatches = data.docs.map(item => ({
+      title: item.title || "Unknown Title",
+      // Open Library returns authors as an array
+      author: item.author_name ? item.author_name.join(', ') : "Unknown Author",
+    }));
+
+    renderSuggestions(liveMatches);
+
+  } catch (error) {
+    console.error("API Error:", error);
+    suggestionsDropdown.innerHTML = `<div class="suggestion-row no-match">Connection error</div>`;
+  }
+}
+
+// 3. Render the results
+function renderSuggestions(matches) {
   const profile = getTasteProfile();
   const profileKeys = new Set(profile.map(bookKey));
-  const q = query.toLowerCase();
-
-  const matches = SEARCH_DB
-    .filter(b => !profileKeys.has(bookKey(b)))
-    .filter(b =>
-      b.title.toLowerCase().includes(q) ||
-      b.author.toLowerCase().includes(q)
-    )
-    .slice(0, 5);
 
   suggestionsDropdown.innerHTML = '';
   suggestionsDropdown.hidden = false;
 
-  if (matches.length === 0) {
-    suggestionsDropdown.innerHTML =
-      `<div class="suggestion-row no-match">No matches found</div>`;
+  // Filter out books the user has already added to their profile
+  const filteredMatches = matches.filter(b => !profileKeys.has(bookKey(b)));
+
+  if (filteredMatches.length === 0) {
+    suggestionsDropdown.innerHTML = `<div class="suggestion-row no-match">No matches found</div>`;
     return;
   }
 
-  matches.forEach(book => {
+  filteredMatches.forEach(book => {
     const row = document.createElement('button');
     row.className = 'suggestion-row';
     row.innerHTML = `
@@ -453,6 +462,7 @@ function renderSuggestions(query) {
       </div>
       <span class="suggestion-add">+</span>
     `;
+    
     row.addEventListener('click', () => {
       if (getTasteProfile().length >= 10) return;
       addToProfile(book);
@@ -461,13 +471,10 @@ function renderSuggestions(query) {
       renderProfile();
       updateContinueButton();
     });
+    
     suggestionsDropdown.appendChild(row);
   });
 }
-
-searchInput.addEventListener('input', (e) => {
-  renderSuggestions(e.target.value);
-});
 
 // Close suggestions when clicking outside
 document.addEventListener('click', (e) => {
