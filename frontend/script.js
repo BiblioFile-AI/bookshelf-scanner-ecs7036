@@ -4,18 +4,22 @@ const mainButton = document.getElementById('main-button');
 const scanScreen = document.getElementById('scan-screen');
 const loadingScreen = document.getElementById('loading-screen');
 const resultsScreen = document.getElementById('results-screen');
+const errorScreen = document.getElementById('error-screen');
+const emptyScreen = document.getElementById('empty-screen');
 const cardList = document.getElementById('card-list');
 const resultsCount = document.getElementById('results-count');
 const scanAgainButton = document.getElementById('scan-again');
+const errorRetryButton = document.getElementById('error-retry');
+const emptyRetryButton = document.getElementById('empty-retry');
 
 let selectedFile = null;
 
 // ---------- choosing a photo ----------
 mainButton.addEventListener('click', () => {
   if (!selectedFile) {
-    photoInput.click();      // no photo yet → open the picker
+    photoInput.click();
   } else {
-    startScan();             // photo ready → run the scan
+    startScan();
   }
 });
 
@@ -39,18 +43,29 @@ async function startScan() {
   scanScreen.hidden = true;
   loadingScreen.hidden = false;
 
-  // TODO integration: replace the two lines below with a real upload:
-  // const formData = new FormData();
-  // formData.append('shelf_photo', selectedFile);
-  // const response = await fetch('http://localhost:5000/scan', { method: 'POST', body: formData });
-  await wait(2500);                                   // pretend the pipeline is working
-  const response = await fetch('mock_scan_response.json');   // fake backend reply
+  try {
+    // TODO integration: replace the two lines below with a real upload:
+    // const formData = new FormData();
+    // formData.append('shelf_photo', selectedFile);
+    // const response = await fetch('http://localhost:5000/scan', { method: 'POST', body: formData });
+    await wait(2500);
+    const response = await fetch('mock_scan_response.json');
 
-  const data = await response.json();
-  renderResults(data.books);
+    if (!response.ok) throw new Error(`Server responded ${response.status}`);
+    const data = await response.json();
 
-  loadingScreen.hidden = true;
-  resultsScreen.hidden = false;
+    if (!data.books || data.books.length === 0) {
+      emptyScreen.hidden = false;
+    } else {
+      renderResults(data.books);
+      resultsScreen.hidden = false;
+    }
+  } catch (err) {
+    console.error('Scan failed:', err);
+    errorScreen.hidden = false;
+  } finally {
+    loadingScreen.hidden = true;
+  }
 }
 
 function wait(ms) {
@@ -59,7 +74,7 @@ function wait(ms) {
 
 // ---------- building the results ----------
 function renderResults(books) {
-  cardList.innerHTML = '';                    // clear any previous scan
+  cardList.innerHTML = '';
   resultsCount.textContent =
     `${books.length} books identified · ranked by match to your taste`;
 
@@ -81,11 +96,11 @@ function renderResults(books) {
 }
 
 function goodreadsUrl(book) {
-  const query = encodeURIComponent(`${book.title} ${book.author}`);
-  return `https://www.goodreads.com/search?q=${query}`;
+  const query = encodeURIComponent(book.title);
+  return `https://www.goodreads.com/search?q=${query}&search%5Bfield%5D=title`;
 }
 
-// ---------- scan another shelf ----------
-scanAgainButton.addEventListener('click', () => {
-  window.location.reload();
-});
+// ---------- retry / reset ----------
+scanAgainButton.addEventListener('click', () => window.location.reload());
+errorRetryButton.addEventListener('click', () => window.location.reload());
+emptyRetryButton.addEventListener('click', () => window.location.reload());
