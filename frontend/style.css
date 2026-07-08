@@ -18,6 +18,8 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+[hidden] { display: none !important; }
+
 body {
   font-family: 'Inter', -apple-system, sans-serif;
   background: var(--background);
@@ -36,8 +38,6 @@ body {
   gap: var(--space-3);
   overflow: hidden;
 }
-
-.screen[hidden] { display: none; }
 
 .bg-motifs {
   position: absolute;
@@ -70,6 +70,23 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   text-align: center;
   margin-top: var(--space-1);
   line-height: 1.5;
+}
+
+/* ---------- Welcome Screen Specific Spacing ---------- */
+#welcome-screen {
+  /* Restores the default top padding */
+  padding-top: 80px; 
+}
+
+#welcome-screen header h1 {
+  /* Keeps the title up top between the smaller background books */
+  margin-top: 10px; 
+}
+
+#welcome-screen header .subtitle {
+  /* Creates the massive gap between the title and paragraph for the big book */
+  margin-top: 110px; 
+  padding: 0 10px; /* Gives the text a bit of breathing room on the sides */
 }
 
 /* ---------- Scan screen ---------- */
@@ -111,6 +128,13 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   font-family: inherit;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.2s;
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* ---------- Loading screen ---------- */
@@ -131,7 +155,7 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   to { transform: rotate(360deg); }
 }
 
-/* ---------- Results screen: card list ---------- */
+/* ---------- Card list ---------- */
 
 .card-list {
   width: 100%;
@@ -185,7 +209,7 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   margin-top: 4px;
 }
 
-/* ---------- Save (star) button on cards ---------- */
+/* ---------- Save star ---------- */
 
 .card-star {
   position: absolute;
@@ -206,7 +230,7 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
 .card-star:hover { transform: scale(1.1); }
 .card-star.saved { color: var(--accent); }
 
-/* ---------- Error & empty state illustrations ---------- */
+/* ---------- Error / empty illustrations ---------- */
 
 .state-illustration--small {
   width: 110px;
@@ -220,7 +244,7 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   opacity: 0.6;
 }
 
-/* ---------- Library: segmented control ---------- */
+/* ---------- Library segmented control ---------- */
 
 .segmented-control {
   position: relative;
@@ -265,13 +289,21 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
 
 .segment-btn.active { color: white; }
 
-/* Placeholder text inside empty library tabs */
 .empty-list-hint {
   color: var(--text-secondary);
   font-size: 14px;
   text-align: center;
   padding: var(--space-4) var(--space-2);
   line-height: 1.6;
+}
+
+/* ---------- Taste profile list (not a card-list, just a container) ---------- */
+
+#taste-profile-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* ---------- Floating bottom nav ---------- */
@@ -306,4 +338,209 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
 .nav-btn.active {
   background: var(--accent);
   color: white;
+}
+
+/* ---------- Onboarding: search input + suggestions ---------- */
+
+.search-input-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  z-index: 100; 
+}
+
+#book-search-input {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(138, 128, 120, 0.3);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+#book-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(122, 59, 46, 0.15);
+}
+
+#book-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.suggestion-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(138, 128, 120, 0.1);
+}
+
+.suggestion-row:last-child { border-bottom: none; }
+.suggestion-row:hover { background: var(--top-pick); }
+
+.suggestion-row.no-match {
+  color: var(--text-secondary);
+  cursor: default;
+  justify-content: center;
+  padding: 20px;
+}
+
+.suggestion-row.no-match:hover { background: none; }
+
+.suggestion-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.suggestion-text .book-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 0;
+}
+
+.suggestion-text .book-author {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.suggestion-add {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ---------- Onboarding: counter + progress ---------- */
+
+.progress-block {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-block .counter {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  margin: 0;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--top-pick);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.25s ease;
+  width: 0%;
+}
+
+/* ---------- Onboarding book card (title + author + ✕) ---------- */
+
+.onboarding-book-card {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.onboarding-book-card .book-title {
+  font-size: 16px;
+  font-weight: 600;
+  padding-right: 32px;
+}
+
+.onboarding-book-card .book-author {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.card-remove {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px 8px;
+  transition: color 0.15s;
+}
+
+.card-remove:hover { color: var(--accent); }
+
+/* ---------- Secondary button ---------- */
+
+.btn-secondary {
+  background: none;
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s;
+}
+
+.btn-secondary:hover { background: var(--top-pick); }
+
+/* --- FIXES FOR DROPDOWN AND CONTINUE BUTTON OVERLAP --- */
+
+/* 1. Force the search bar to stay above all other elements */
+.search-input-wrap {
+  z-index: 999 !important; 
+}
+
+/* 2. Add a slightly stronger shadow to the dropdown so it pops */
+.suggestions-dropdown {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+  z-index: 1000 !important;
+}
+
+/* 3. Push the Continue button to the bottom of the screen so it stays out of the way */
+#continue-btn {
+  margin-top: auto !important;
 }
