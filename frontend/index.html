@@ -10,9 +10,11 @@
 
   <!-- SCREEN 1: Scan -->
   <main class="screen" id="scan-screen">
+    <img class="bg-motifs" src="bg-scan.svg" alt="">
+
     <header>
-      <h1>Scan a shelf</h1>
-      <p class="subtitle">Take a photo of any bookshelf to get started</p>
+      <h1>Scan a Shelf</h1>
+      <p class="subtitle">Take a photo of any bookshelf to get started:</p>
     </header>
 
     <div class="upload-zone">
@@ -27,25 +29,55 @@
 
   <!-- SCREEN 2: Loading -->
   <main class="screen" id="loading-screen" hidden>
+    <img class="bg-motifs" src="bg-scanning.svg" alt="">
+
     <header>
       <h1>Reading your shelf…</h1>
       <p class="subtitle">This takes a few seconds</p>
     </header>
 
     <div class="spinner"></div>
-    <p class="subtitle">Identifying books… matching to your taste</p>
+    <p class="subtitle">Identifying books…</p>
   </main>
 
   <!-- SCREEN 3: Results -->
   <main class="screen" id="results-screen" hidden>
+
     <header>
-      <h1>Your shelf, ranked</h1>
+      <h1>Your Shelf, Ranked:</h1>
       <p class="subtitle" id="results-count"></p>
     </header>
 
     <div class="card-list" id="card-list"></div>
 
     <button class="btn-primary" id="scan-again">Scan Another Shelf</button>
+  </main>
+
+  <!-- SCREEN 4: Scan failed (error state) -->
+  <main class="screen" id="error-screen" hidden>
+    <img class="bg-motifs" src="bg-scan.svg" alt="">
+
+    <header>
+      <h1>Couldn't read that shelf</h1>
+    </header>
+
+    <img class="state-illustration state-illustration--small" src="sad-face.svg" alt="">
+
+    <p class="subtitle">Something went wrong!<br>Check your connection and try again</p>
+
+    <button class="btn-primary" id="error-retry">Try Again</button>
+  </main>
+
+  <!-- SCREEN 5: No books found (empty state) -->
+  <main class="screen" id="empty-screen" hidden>
+    <header>
+      <h1>No Books Found</h1>
+      <p class="subtitle">We couldn't spot any book spines in that photo</p>
+    </header>
+
+    <button class="btn-primary" id="empty-retry">Try Again</button>
+
+    <img class="state-illustration state-illustration--large" src="open-book.svg" alt="">
   </main>
 
   <script src="script.js"></script>

@@ -25,6 +25,7 @@ body {
 }
 
 .screen {
+  position: relative;
   max-width: 390px;
   min-height: 100vh;
   margin: 0 auto;
@@ -33,6 +34,36 @@ body {
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
+  overflow: hidden;
+}
+
+.screen[hidden] { display: none; }
+
+/* falling-books backgrounds: sit behind everything, ignore clicks */
+.bg-motifs {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Results screen background repeats down the whole scrollable page instead
+   of using a single stretched image, so the motifs don't run out on a tall list */
+#results-screen {
+  background-image: url('bg-results.svg');
+  background-repeat: repeat-y;
+  background-position: top center;
+  background-size: 390px auto;
+}
+
+/* everything else inside a screen renders above the motifs */
+.screen > *:not(.bg-motifs) {
+  position: relative;
+  z-index: 1;
 }
 
 h1 { font-size: 24px; font-weight: 600; text-align: center; }
@@ -42,6 +73,7 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   color: var(--text-secondary);
   text-align: center;
   margin-top: var(--space-1);
+  line-height: 1.5;
 }
 
 /* ---------- Scan screen ---------- */
@@ -82,6 +114,7 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* ---------- Loading screen ---------- */
@@ -159,4 +192,16 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   margin-top: 4px;
 }
 
-.screen[hidden] { display: none; }
+/* ---------- Error & empty states ---------- */
+
+.state-illustration--small {
+  width: 110px;
+  margin-top: var(--space-3);
+  opacity: 0.85;
+}
+
+.state-illustration--large {
+  width: 280px;
+  margin-top: var(--space-4);
+  opacity: 0.6;
+}
