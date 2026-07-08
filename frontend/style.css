@@ -29,7 +29,7 @@ body {
   max-width: 390px;
   min-height: 100vh;
   margin: 0 auto;
-  padding: 70px var(--space-2) var(--space-3);
+  padding: 70px var(--space-2) 110px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -39,7 +39,6 @@ body {
 
 .screen[hidden] { display: none; }
 
-/* falling-books backgrounds: sit behind everything, ignore clicks */
 .bg-motifs {
   position: absolute;
   inset: 0;
@@ -51,8 +50,6 @@ body {
   z-index: 0;
 }
 
-/* Results screen background repeats down the whole scrollable page instead
-   of using a single stretched image, so the motifs don't run out on a tall list */
 #results-screen {
   background-image: url('bg-results.svg');
   background-repeat: repeat-y;
@@ -60,7 +57,6 @@ body {
   background-size: 390px auto;
 }
 
-/* everything else inside a screen renders above the motifs */
 .screen > *:not(.bg-motifs) {
   position: relative;
   z-index: 1;
@@ -135,7 +131,7 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   to { transform: rotate(360deg); }
 }
 
-/* ---------- Results screen ---------- */
+/* ---------- Results screen: card list ---------- */
 
 .card-list {
   width: 100%;
@@ -145,6 +141,7 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
 }
 
 .book-card {
+  position: relative;
   background: var(--surface);
   border-radius: var(--radius-card);
   padding: var(--space-2);
@@ -158,28 +155,24 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
 
 .book-card.top-pick {
   border: 2px solid var(--accent);
-  position: relative;
 }
 
 .top-pick-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  align-self: flex-start;
   background: var(--top-pick);
   color: var(--accent);
   font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 6px;
+  margin-bottom: 4px;
 }
 
 .book-title {
   font-size: 17px;
   font-weight: 600;
-  padding-right: 80px;
+  padding-right: 40px;
 }
-
-.book-card:not(.top-pick) .book-title { padding-right: 0; }
 
 .book-author {
   font-size: 15px;
@@ -192,7 +185,28 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   margin-top: 4px;
 }
 
-/* ---------- Error & empty states ---------- */
+/* ---------- Save (star) button on cards ---------- */
+
+.card-star {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 6px 8px;
+  transition: color 0.15s ease, transform 0.15s ease;
+  z-index: 2;
+}
+
+.card-star:hover { transform: scale(1.1); }
+.card-star.saved { color: var(--accent); }
+
+/* ---------- Error & empty state illustrations ---------- */
 
 .state-illustration--small {
   width: 110px;
@@ -204,4 +218,92 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   width: 280px;
   margin-top: var(--space-4);
   opacity: 0.6;
+}
+
+/* ---------- Library: segmented control ---------- */
+
+.segmented-control {
+  position: relative;
+  display: flex;
+  width: 100%;
+  max-width: 320px;
+  background: var(--top-pick);
+  border-radius: 26px;
+  padding: 4px;
+}
+
+.segment-pill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  background: var(--accent);
+  border-radius: 22px;
+  transition: transform 0.25s ease;
+  z-index: 0;
+}
+
+.segment-pill.right {
+  transform: translateX(100%);
+}
+
+.segment-btn {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--accent);
+  transition: color 0.25s ease;
+}
+
+.segment-btn.active { color: white; }
+
+/* Placeholder text inside empty library tabs */
+.empty-list-hint {
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+  padding: var(--space-4) var(--space-2);
+  line-height: 1.6;
+}
+
+/* ---------- Floating bottom nav ---------- */
+
+.floating-nav {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  padding: 4px;
+  border-radius: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 22px;
+  border-radius: 28px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-btn.active {
+  background: var(--accent);
+  color: white;
 }

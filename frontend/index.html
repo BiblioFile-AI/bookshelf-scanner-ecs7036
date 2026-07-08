@@ -8,7 +8,6 @@
 </head>
 <body>
 
-  <!-- SCREEN 1: Scan -->
   <main class="screen" id="scan-screen">
     <img class="bg-motifs" src="bg-scan.svg" alt="">
 
@@ -27,7 +26,6 @@
     <button class="btn-primary" id="main-button">Choose Photo</button>
   </main>
 
-  <!-- SCREEN 2: Loading -->
   <main class="screen" id="loading-screen" hidden>
     <img class="bg-motifs" src="bg-scanning.svg" alt="">
 
@@ -40,9 +38,7 @@
     <p class="subtitle">Identifying books…</p>
   </main>
 
-  <!-- SCREEN 3: Results -->
   <main class="screen" id="results-screen" hidden>
-
     <header>
       <h1>Your Shelf, Ranked:</h1>
       <p class="subtitle" id="results-count"></p>
@@ -53,7 +49,6 @@
     <button class="btn-primary" id="scan-again">Scan Another Shelf</button>
   </main>
 
-  <!-- SCREEN 4: Scan failed (error state) -->
   <main class="screen" id="error-screen" hidden>
     <img class="bg-motifs" src="bg-scan.svg" alt="">
 
@@ -61,24 +56,42 @@
       <h1>Couldn't read that shelf</h1>
     </header>
 
-    <img class="state-illustration state-illustration--small" src="sad-face.svg" alt="">
-
     <p class="subtitle">Something went wrong!<br>Check your connection and try again</p>
 
     <button class="btn-primary" id="error-retry">Try Again</button>
   </main>
 
-  <!-- SCREEN 5: No books found (empty state) -->
   <main class="screen" id="empty-screen" hidden>
+    <img class="bg-motifs" src="bg-scan.svg" alt="">
+
     <header>
       <h1>No Books Found</h1>
       <p class="subtitle">We couldn't spot any book spines in that photo</p>
     </header>
 
     <button class="btn-primary" id="empty-retry">Try Again</button>
-
-    <img class="state-illustration state-illustration--large" src="open-book.svg" alt="">
   </main>
+
+  <main class="screen" id="library-screen" hidden>
+    <header>
+      <h1>Your Bookshelf</h1>
+      <p class="subtitle">Everything you've saved from shelves</p>
+    </header>
+
+    <div class="segmented-control">
+      <div class="segment-pill" id="segment-pill"></div>
+      <button class="segment-btn active" id="btn-tab-saved">Saved Scans</button>
+      <button class="segment-btn" id="btn-tab-taste">Taste Profile</button>
+    </div>
+
+    <div class="card-list" id="saved-scans-list"></div>
+    <div class="card-list" id="taste-profile-list" hidden></div>
+  </main>
+
+  <nav class="floating-nav" id="bottom-nav">
+    <button class="nav-btn active" id="nav-scan">Scan</button>
+    <button class="nav-btn" id="nav-library">My Library</button>
+  </nav>
 
   <script src="script.js"></script>
 </body>
