@@ -63,7 +63,12 @@ def prep_recommendation_data(scanned_books_input, user_profile_input):
         
         #Look up the AI-classified genre, using "General & Contemporary Fiction" as a safety net if the key is missing
         final_genre_labels.append(genre_results_dict.get(lookup_key, "General & Contemporary Fiction"))
-    
+
+    #Carry the classified genre back onto the table so the API response
+    #can show it instead of Google Books' raw, uncontrolled category text
+    clean_df = clean_df.copy()
+    clean_df["genre_label"] = final_genre_labels
+
 
     #Extract unique authors from the profile dataset
     profile_authors = list(profile_df["authors"].dropna().unique())

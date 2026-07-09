@@ -43,7 +43,7 @@ def _to_frontend(book):
     return {
         "title":       book.get("title"),
         "author":      book.get("authors"),          # authors     -> author
-        "genre":       book.get("categories"),       # categories  -> genre
+        "genre":       book.get("genre_label") or book.get("categories"),  # AI-classified genre, falls back to raw category text
         "year":        int(year_match.group()) if year_match else None,
         "pages":       book.get("pageCount"),        # pageCount   -> pages
         "rank":        book.get("rank"),
@@ -188,11 +188,27 @@ def onboard():
     saved_titles = [b["title"] for b in profile["books"]]
     added        = 0
 
-    for title in books:
-        if title not in saved_titles:
-            profile["books"].append(normalize_book({"title": title, "query_title": title, "found": False}))
-            saved_titles.append(title)
-            added += 1
+    for entry in books:
+        # Accept either a plain title string or a {title, author} object —
+        # the onboarding search UI knows the author; keeping it improves
+        # the metadata lookup Katherine's pipeline does downstream.
+        if isinstance(entry, dict):
+            title  = entry.get("title")
+            author = entry.get("author") or entry.get("authors")
+        else:
+            title  = entry
+            author = None
+
+        if not title or title in saved_titles:
+            continue
+        profile["books"].append(normalize_book({
+            "title":        title,
+            "query_title":  title,
+            "query_author": author,
+            "found":        False,
+        }))
+        saved_titles.append(title)
+        added += 1
 
     save_profile(user_id, profile)
     return jsonify({

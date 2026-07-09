@@ -1,0 +1,27 @@
+{
+  "user_id": "align-test",
+  "books": [
+    {
+      "query_title": "Dune",
+      "query_author": "Frank Herbert",
+      "found": false,
+      "title": "Dune",
+      "authors": null,
+      "categories": null,
+      "averageRating": null,
+      "pageCount": null,
+      "publishedDate": null
+    },
+    {
+      "query_title": "The Hobbit",
+      "query_author": "J.R.R. Tolkien",
+      "found": false,
+      "title": "The Hobbit",
+      "authors": null,
+      "categories": null,
+      "averageRating": null,
+      "pageCount": null,
+      "publishedDate": null
+    }
+  ]
+}

@@ -41,9 +41,44 @@ let addBooksMode = 'onboarding';
 const SAVED_KEY = 'bookscanner_saved_books';
 const PROFILE_KEY = 'bookscanner_taste_profile';
 const ONBOARDED_KEY = 'bookscanner_onboarded';
+const USER_ID_KEY = 'bookscanner_user_id';
+const API_BASE = 'http://localhost:5000';
 
 function bookKey(book) {
   return `${book.title}::${book.author}`;
+}
+
+// Every backend route needs a user_id to know whose profile to use.
+// There's no login, so each browser gets one UUID, generated once and
+// reused for every /onboard, /scan, /save and /profile call.
+function getUserId() {
+  let id = localStorage.getItem(USER_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(USER_ID_KEY, id);
+  }
+  return id;
+}
+
+// Push the local taste profile to the backend so KNN has something to
+// rank scans against. Safe to call repeatedly — /onboard skips titles
+// it already has.
+async function syncProfileToBackend() {
+  const profile = getTasteProfile();
+  if (profile.length === 0) return;
+
+  try {
+    await fetch(`${API_BASE}/onboard`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: getUserId(),
+        books: profile.map(b => ({ title: b.title, author: b.author })),
+      }),
+    });
+  } catch (err) {
+    console.error('Profile sync failed:', err);
+  }
 }
 
 // Saved scans (starred from results)
@@ -196,9 +231,10 @@ async function startScan() {
   loadingScreen.hidden = false;
 
   try {
-    await wait(2500);
-    // In the future, this mock file will be replaced by your image scanning backend
-    const response = await fetch('mock_scan_response.json');
+    const formData = new FormData();
+    formData.append('shelf_photo', selectedFile);
+    formData.append('user_id', getUserId());
+    const response = await fetch(`${API_BASE}/scan`, { method: 'POST', body: formData });
 
     if (!response.ok) throw new Error(`Server responded ${response.status}`);
     const data = await response.json();
@@ -216,10 +252,6 @@ async function startScan() {
     loadingScreen.hidden = true;
     errorScreen.hidden = false;
   }
-}
-
-function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // ---------- results cards ----------
@@ -485,6 +517,7 @@ document.addEventListener('click', (e) => {
 
 continueBtn.addEventListener('click', () => {
   if (continueBtn.disabled) return;
+  syncProfileToBackend();
   if (addBooksMode === 'onboarding') {
     goToDone();
   } else {
