@@ -227,8 +227,13 @@ def extract_titles_and_authors(image_path):
     
     try:
         img = Image.open(image_path)
+        # Phone photos can be 10-40MB once decoded; the vision model doesn't
+        # need full resolution to read spines, and holding a full-size bitmap
+        # in memory alongside pandas/numpy/scikit-learn risks an OOM kill on
+        # a memory-constrained host. Cap the longest side before sending it on.
+        img.thumbnail((1600, 1600))
         model = genai.GenerativeModel('gemini-2.5-flash')
-        
+
         #executes API call.
         response = generate_content_with_retry(model, contents=[vision_prompt, img], generation_config={"response_mime_type": "application/json"})
         
