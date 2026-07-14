@@ -10,14 +10,34 @@ import google.generativeai as genai
 #API, cache, and genre set up.
 load_dotenv()
 
-#Retrieve gemini API key.
-GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
+#Retrieve gemini API keys - whichever of GEMINI_API_KEY_1..4 are actually set.
+GEMINI_API_KEY_ENV_VARS = ["GEMINI_API_KEY_1", "GEMINI_API_KEY_2",
+                           "GEMINI_API_KEY_3", "GEMINI_API_KEY_4"]
 
-if not GOOGLE_API_KEY:
-    print("No API key found")
+def load_gemini_api_keys():
+    """Read whichever of GEMINI_API_KEY_1..4 are set, in order.
 
-else:
-    genai.configure(api_key=GOOGLE_API_KEY)
+    Unlike Google Books, Gemini has no anonymous/keyless tier, so an empty
+    list here means every Gemini call will fail until at least one key is
+    configured. We print a clear message either way so that's never silent.
+    """
+    keys = [os.environ.get(var) for var in GEMINI_API_KEY_ENV_VARS]
+    keys = [key for key in keys if key]
+    if not keys:
+        print("WARNING: none of GEMINI_API_KEY_1..4 are set - Gemini calls will "
+              "fail until at least one is configured (locally via .env, or on Render).")
+    else:
+        print(f"[KEYS] Loaded {len(keys)} Gemini API key(s) available for rotation.")
+    return keys
+
+GEMINI_API_KEYS = load_gemini_api_keys()
+
+def _configure_gemini_key(key_index):
+    """(Re)configure the genai SDK's global client to use GEMINI_API_KEYS[key_index]."""
+    genai.configure(api_key=GEMINI_API_KEYS[key_index])
+
+if GEMINI_API_KEYS:
+    _configure_gemini_key(0)
 
 IMAGE_CACHE_FILE = "../data/image_extraction_cache.json"
 GENRE_CACHE_FILE = "../data/genre_classification_cache.json"
@@ -109,40 +129,55 @@ def generate_content_with_retry(model, contents, generation_config=None):
            generation_config (dict) - Custom instructions for the AI. Used to enforce strict JSON output.
     Output: genai.types.GenerateContentResponse - The raw data returned by the Gemini service node.
 
-    Calls Gemini using exponential back-off to manage network bottlenecks and rate limit exceptions. This loop intercepts 
-    these problems by pausing the script execution, and automatically re-attempts the call at escalating wait intervals 
-    (1, 2, 4, 8, and 16 seconds). This ensures that large shelves don't cause the program to fail.
+    Calls Gemini, rotating through GEMINI_API_KEYS on quota/rate-limit errors: each
+    configured key gets one immediate attempt, and a hit on its quota moves straight
+    to the next key (no point waiting - a different key's quota is independent).
+    Once every key has been tried, falls back to the original exponential back-off
+    (1, 2, 4, 8, 16 seconds) on the last key, in case it was just a transient
+    per-minute limit rather than a hard daily quota. This ensures that large shelves
+    (or several keys' quotas) don't cause the program to fail outright.
     '''
 
-    delays = [1, 2, 4, 8, 16]
-
-    
-    for delay in delays:
-        try:
-            #Checks if user has provided custom generation instructions.
-            if generation_config:
-                return model.generate_content(contents, generation_config=generation_config)
-            
-            else:
-                return model.generate_content(contents)
-        
-        except Exception as e:
-            err_msg = str(e)
-            #If rate limit is hit or there is a quota message, pause and retry
-            if "429" in err_msg or "quota" in err_msg.lower():
-                time.sleep(delay)
-            else:
-                #If it's a different error, raise it.
-                raise e
-    
-    
-    #Final attempt before raising error.
-    try:
+    def call():
         if generation_config:
             return model.generate_content(contents, generation_config=generation_config)
-        else:
-            return model.generate_content(contents)
-    
+        return model.generate_content(contents)
+
+    def is_quota_error(err):
+        msg = str(err)
+        return "429" in msg or "quota" in msg.lower()
+
+    candidates = list(enumerate(GEMINI_API_KEYS)) if GEMINI_API_KEYS else [(None, None)]
+
+    for key_index, key in candidates:
+        if key:
+            _configure_gemini_key(key_index)
+            if key_index > 0:
+                print(f"[ROTATE] Previous Gemini key hit its quota - retrying with key #{key_index + 1}.")
+
+        try:
+            return call()
+        except Exception as e:
+            if not is_quota_error(e):
+                raise
+            print(f"[QUOTA] Gemini key #{(key_index or 0) + 1} hit its quota/rate limit.")
+            continue # try the next candidate key
+
+    #Every key hit quota (or none are configured) - fall back to the original
+    #back-off in case it was just a transient per-minute limit.
+    delays = [1, 2, 4, 8, 16]
+    for delay in delays:
+        try:
+            return call()
+        except Exception as e:
+            if is_quota_error(e):
+                time.sleep(delay)
+            else:
+                raise e
+
+    #Final attempt before raising error.
+    try:
+        return call()
     except Exception as e:
         raise Exception(f"API Call Failed: {str(e)}") from e
 

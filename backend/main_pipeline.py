@@ -31,7 +31,7 @@ def prep_recommendation_data(scanned_books_input, user_profile_input):
     
     #Metadata lookup for the scanned shelf books
     print("\nFetching Catalog Metadata for Scanned Shelf...")
-    raw_df = metadata_lookup.build_metadata_table(tuple_books_list, api_key=metadata_lookup.API_KEY)
+    raw_df = metadata_lookup.build_metadata_table(tuple_books_list, api_keys=metadata_lookup.API_KEYS)
     full_df = metadata_lookup.apply_fallback(raw_df)
     clean_df, dropped_count = metadata_lookup.apply_missing_data_policy(full_df)
     
@@ -48,7 +48,7 @@ def prep_recommendation_data(scanned_books_input, user_profile_input):
         #Fallback if user only passes plain text title strings
         profile_tuples = [(title, "Unknown") for title in user_profile_input]
         
-    raw_profile_df = metadata_lookup.build_metadata_table(profile_tuples, api_key=metadata_lookup.API_KEY)
+    raw_profile_df = metadata_lookup.build_metadata_table(profile_tuples, api_keys=metadata_lookup.API_KEYS)
     full_profile_df = metadata_lookup.apply_fallback(raw_profile_df)
     profile_df, _ = metadata_lookup.apply_missing_data_policy(full_profile_df)
     

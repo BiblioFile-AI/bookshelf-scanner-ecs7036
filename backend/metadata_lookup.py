@@ -19,23 +19,30 @@ FIELDS = ["title", "authors", "categories", "averageRating", "pageCount", "publi
 FALLBACK_FIELDS = ["pageCount", "categories", "publishedDate"]
 
 #API KEY HANDLING
-def load_api_key():
-    """Read the Google Books API key from the GOOGLE_BOOKS_API_KEY env var.
+API_KEY_ENV_VARS = ["GOOGLE_BOOKS_API_KEY_1", "GOOGLE_BOOKS_API_KEY_2",
+                    "GOOGLE_BOOKS_API_KEY_3", "GOOGLE_BOOKS_API_KEY_4"]
 
-    Returns the key as a string, or None if the env var isn't set. The
-    volumes endpoint also works without a key, just with a lower anonymous
-    quota, so None is not fatal - but we print a clear warning either way
-    so a missing key is never silent.
+def load_api_keys():
+    """Read whichever of GOOGLE_BOOKS_API_KEY_1..4 are set, in order.
+
+    Returns a list (possibly empty) of the keys found. The volumes endpoint
+    also works without a key, just with a lower anonymous quota, so an
+    empty list is not fatal - fetch_google_books falls back to an
+    anonymous request when the list is empty or every key in it hits its
+    quota. We print a clear message either way so a missing/exhausted key
+    setup is never silent.
     """
-    key = os.environ.get("GOOGLE_BOOKS_API_KEY")
-    if not key:
-        print("WARNING: GOOGLE_BOOKS_API_KEY is not set - continuing without a "
-              "key (lower quota). Set it in your environment (or a local .env "
-              "file) to use an authenticated quota.")
-        return None
-    return key
+    keys = [os.environ.get(var) for var in API_KEY_ENV_VARS]
+    keys = [key for key in keys if key]
+    if not keys:
+        print("WARNING: none of GOOGLE_BOOKS_API_KEY_1..4 are set - continuing "
+              "without a key (lower quota). Set at least one in your "
+              "environment (or a local .env file) to use an authenticated quota.")
+    else:
+        print(f"[KEYS] Loaded {len(keys)} Google Books API key(s) available for rotation.")
+    return keys
 
-API_KEY = load_api_key()
+API_KEYS = load_api_keys()
 
 #RESPONSE CACHE LAYER
 CACHE_PATH = Path("../data/api_cache.json")
@@ -108,7 +115,7 @@ def pick_best_match(items, query_title):
         return s
     return max(items, key=score)
 
-def fetch_google_books(title, author, api_key=None, pause=0.5, retries=2):
+def fetch_google_books(title, author, api_keys=None, pause=0.5, retries=2):
     """Look one book up on the Google Books volumes endpoint.
 
     Checks the response cache first: a cached record (or a cached
@@ -122,22 +129,28 @@ def fetch_google_books(title, author, api_key=None, pause=0.5, retries=2):
         Book title as guessed by the vision step.
     author : str
         Author name as guessed by the vision step.
-    api_key : str or None
-        Google Books API key. If None the request is sent anonymously.
+    api_keys : list of str or None
+        Google Books API keys to try, in order. Defaults to the
+        module-level API_KEYS (loaded from GOOGLE_BOOKS_API_KEY_1..4).
+        A request starts with the first key; if a key's quota is hit it
+        rotates to the next one. If every key is exhausted (or none are
+        configured) the request falls back to an anonymous call, same as
+        when no key is set at all.
     pause : float
         Seconds to sleep before each network request, to stay under
         the free-tier rate limit (~15 requests per minute).
     retries : int
         How many extra attempts to make on transient server errors
-        (HTTP 5xx), waiting 2 seconds between attempts.
+        (HTTP 5xx) per key, waiting 2 seconds between attempts.
 
     Returns
     -------
     dict or None
         The volumeInfo record of the best-matching result (see
         pick_best_match), or None when the book was not found, the
-        request failed, or the quota was hit. Each failure prints a
-        clear message so we can see it in the run log.
+        request failed, or every key (and the anonymous fallback) hit
+        its quota. Each failure prints a clear message so we can see it
+        in the run log.
     """
     cached = cache_get("google", title, author)
     if cached == NOT_FOUND:
@@ -147,46 +160,61 @@ def fetch_google_books(title, author, api_key=None, pause=0.5, retries=2):
         return cached # cache hit: no pause, no network call
 
     query = f'intitle:"{title}" inauthor:"{author}"' if author else f'intitle:"{title}"'
-    params = {
+    base_params = {
         "q": query,
         "maxResults": 10, # fetch several editions, pick_best_match chooses
     }
-    if api_key:
-        params["key"] = api_key
 
-    for attempt in range(retries + 1):
-        time.sleep(pause) # rate-limit courtesy pause
-        
-        try:
-            response = requests.get(GOOGLE_BOOKS_URL, params=params, timeout=10)
-        except requests.exceptions.RequestException as err:
-            print(f"[ERROR] Request failed for '{title}' by {author}: {err}")
-            return None
+    keys_to_try = list(api_keys if api_keys is not None else API_KEYS)
+    # A trailing (None, None) is the anonymous fallback tried after every key
+    candidates = list(enumerate(keys_to_try, start=1)) + [(None, None)]
 
-        if response.status_code >= 500: # transient server error -> retry
-            if attempt < retries:
-                print(f"[RETRY] HTTP {response.status_code} for '{title}' - trying again...")
-                time.sleep(2)
-                continue
-            print(f"[ERROR] HTTP {response.status_code} for '{title}' by {author} (gave up)")
-            return None
+    for key_index, key in candidates:
+        params = dict(base_params)
+        if key:
+            params["key"] = key
+        if key_index and key_index > 1:
+            print(f"[ROTATE] '{title}': previous key hit its quota - retrying with API key #{key_index}.")
+        elif key_index is None and keys_to_try:
+            print(f"[ROTATE] '{title}': all {len(keys_to_try)} API key(s) exhausted - retrying unauthenticated (lower quota).")
 
-        if response.status_code == 429 or (response.status_code == 403 and "quota" in response.text.lower()):
-            print(f"[QUOTA] Rate limit or daily quota reached at '{title}' - stop and retry later.")
-            return None
-        if response.status_code != 200:
-            print(f"[ERROR] HTTP {response.status_code} for '{title}' by {author}")
-            return None
+        for attempt in range(retries + 1):
+            time.sleep(pause) # rate-limit courtesy pause
 
-        data = response.json()
-        if data.get("totalItems", 0) == 0 or "items" not in data:
-            print(f"[NOT FOUND] Google Books has no match for '{title}' by {author}")
-            cache_put("google", title, author, NOT_FOUND)
-            return None
+            try:
+                response = requests.get(GOOGLE_BOOKS_URL, params=params, timeout=10)
+            except requests.exceptions.RequestException as err:
+                print(f"[ERROR] Request failed for '{title}' by {author}: {err}")
+                return None
 
-        best = pick_best_match(data["items"], title)["volumeInfo"]
-        cache_put("google", title, author, best)
-        return best
+            if response.status_code >= 500: # transient server error -> retry
+                if attempt < retries:
+                    print(f"[RETRY] HTTP {response.status_code} for '{title}' - trying again...")
+                    time.sleep(2)
+                    continue
+                print(f"[ERROR] HTTP {response.status_code} for '{title}' by {author} (gave up)")
+                return None
+
+            if response.status_code == 429 or (response.status_code == 403 and "quota" in response.text.lower()):
+                label = f"key #{key_index}" if key_index else "the anonymous quota"
+                print(f"[QUOTA] Rate limit or daily quota reached on {label} for '{title}'.")
+                break # try the next candidate key
+            if response.status_code != 200:
+                print(f"[ERROR] HTTP {response.status_code} for '{title}' by {author}")
+                return None
+
+            data = response.json()
+            if data.get("totalItems", 0) == 0 or "items" not in data:
+                print(f"[NOT FOUND] Google Books has no match for '{title}' by {author}")
+                cache_put("google", title, author, NOT_FOUND)
+                return None
+
+            best = pick_best_match(data["items"], title)["volumeInfo"]
+            cache_put("google", title, author, best)
+            return best
+
+    print(f"[QUOTA] '{title}': every API key and the anonymous fallback are rate-limited - giving up.")
+    return None
 
 def parse_volume_info(volume_info):
     """Reduce a raw volumeInfo record to the six fields the pipeline uses.
@@ -207,9 +235,9 @@ def parse_volume_info(volume_info):
         row[field] = value
     return row
 
-def build_metadata_table(books, api_key=None):
+def build_metadata_table(books, api_keys=None):
     """Fetch metadata for a list of (title, author) pairs.
-    
+
     Returns a DataFrame with one row per book: the original query columns
     plus the six Google Books fields, plus a 'found' flag. Books that were
     not found keep their row (all fields None) so the coverage count in
@@ -217,7 +245,7 @@ def build_metadata_table(books, api_key=None):
     """
     rows = []
     for title, author in books:
-        volume_info = fetch_google_books(title, author, api_key=api_key)
+        volume_info = fetch_google_books(title, author, api_keys=api_keys)
         row = {"query_title": title, "query_author": author, "found": volume_info is not None}
         row.update(parse_volume_info(volume_info) if volume_info else {f: None for f in FIELDS})
         rows.append(row)
@@ -563,7 +591,7 @@ def build_feature_vectors(df, genre_labels, profile_authors, scaler):
     }, index=df.index)
     return vectors[VECTOR_COLUMNS]
 
-def build_user_profile(liked_books, api_key=None):
+def build_user_profile(liked_books, api_keys=None):
     """Build a user's taste profile from their liked books.
 
     Parameters
@@ -572,8 +600,8 @@ def build_user_profile(liked_books, api_key=None):
         The books the user says they enjoyed - ten at onboarding,
         more as they save books. The genre label comes from Katy's
         classifier and must use the agreed spelling.
-    api_key : str or None
-        Google Books API key, passed through to the metadata pipeline.
+    api_keys : list of str or None
+        Google Books API keys, passed through to the metadata pipeline.
 
     Returns
     -------
@@ -589,7 +617,7 @@ def build_user_profile(liked_books, api_key=None):
     warning: a profile entry without metadata could never be a vector.
     """
     lookups = [(title, author) for title, author, _ in liked_books]
-    meta = apply_fallback(build_metadata_table(lookups, api_key=api_key))
+    meta = apply_fallback(build_metadata_table(lookups, api_keys=api_keys))
     meta["genre"] = [genre for _, _, genre in liked_books]  # rows keep list order
     meta, dropped = apply_missing_data_policy(meta)
     if dropped:
@@ -602,7 +630,7 @@ def build_user_profile(liked_books, api_key=None):
             "scaler": scaler, "authors": authors, "vectors": vectors}
 
 
-def add_book_to_profile(profile, title, author, genre_label, api_key=None):
+def add_book_to_profile(profile, title, author, genre_label, api_keys=None):
     """Add one saved book and return the rebuilt profile.
 
     Rebuilding from the book list (rather than appending a vector) is
@@ -612,4 +640,4 @@ def add_book_to_profile(profile, title, author, genre_label, api_key=None):
     is cheap - only the newly added book causes a network request.
     """
     return build_user_profile(profile["books"] + [(title, author, genre_label)],
-                              api_key=api_key)
+                              api_keys=api_keys)

@@ -65,7 +65,7 @@ def _build_profile_vectors(profile_books):
          b.get("authors") or b.get("query_author", ""))
         for b in profile_books
     ]
-    raw_df     = metadata_lookup.build_metadata_table(profile_tuples, api_key=metadata_lookup.API_KEY)
+    raw_df     = metadata_lookup.build_metadata_table(profile_tuples, api_keys=metadata_lookup.API_KEYS)
     full_df    = metadata_lookup.apply_fallback(raw_df)
     profile_df, _ = metadata_lookup.apply_missing_data_policy(full_df)
 
