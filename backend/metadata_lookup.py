@@ -1,11 +1,15 @@
 import json
+import os
 import re
 import time
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import requests
+from dotenv import load_dotenv
 from sklearn.preprocessing import StandardScaler
+
+load_dotenv()
 
 GOOGLE_BOOKS_URL = "https://www.googleapis.com/books/v1/volumes"
 OPEN_LIBRARY_URL = "https://openlibrary.org/search.json"
@@ -15,20 +19,19 @@ FIELDS = ["title", "authors", "categories", "averageRating", "pageCount", "publi
 FALLBACK_FIELDS = ["pageCount", "categories", "publishedDate"]
 
 #API KEY HANDLING
-def load_api_key(path="../api_key.txt"):
-    """Read the Google Books API key from a local file kept out of git.
-    
-    Returns the key as a string, or None if the file is missing or still
-    contains the placeholder. The volumes endpoint also works without a key,
-    just with a lower anonymous quota, so None is not fatal.
+def load_api_key():
+    """Read the Google Books API key from the GOOGLE_BOOKS_API_KEY env var.
+
+    Returns the key as a string, or None if the env var isn't set. The
+    volumes endpoint also works without a key, just with a lower anonymous
+    quota, so None is not fatal - but we print a clear warning either way
+    so a missing key is never silent.
     """
-    key_file = Path(path)
-    if not key_file.exists():
-        print("No api_key.txt found - continuing without a key (lower quota).")
-        return None
-    key = key_file.read_text().strip()
-    if not key or key.startswith("PASTE_"):
-        print("api_key.txt still has the placeholder - continuing without a key.")
+    key = os.environ.get("GOOGLE_BOOKS_API_KEY")
+    if not key:
+        print("WARNING: GOOGLE_BOOKS_API_KEY is not set - continuing without a "
+              "key (lower quota). Set it in your environment (or a local .env "
+              "file) to use an authenticated quota.")
         return None
     return key
 
