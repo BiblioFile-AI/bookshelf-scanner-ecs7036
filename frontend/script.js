@@ -380,8 +380,10 @@ function createOnboardingBookCard(book, onRemove) {
   card.className = 'onboarding-book-card';
   card.innerHTML = `
     <button class="card-remove" aria-label="Remove book">✕</button>
-    <span class="book-title">${book.title}</span>
-    <span class="book-author">${book.author}</span>
+    <a class="book-link" href="${goodreadsUrl(book)}" target="_blank" rel="noopener">
+      <span class="book-title">${book.title}</span>
+      <span class="book-author">${book.author}</span>
+    </a>
   `;
   card.querySelector('.card-remove').addEventListener('click', onRemove);
   return card;

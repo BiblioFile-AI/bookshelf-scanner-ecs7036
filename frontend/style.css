@@ -482,6 +482,14 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+.onboarding-book-card .book-link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+}
+
 .onboarding-book-card .book-title {
   font-size: 16px;
   font-weight: 600;
