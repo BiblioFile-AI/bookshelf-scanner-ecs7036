@@ -42,7 +42,7 @@ const SAVED_KEY = 'bookscanner_saved_books';
 const PROFILE_KEY = 'bookscanner_taste_profile';
 const ONBOARDED_KEY = 'bookscanner_onboarded';
 const USER_ID_KEY = 'bookscanner_user_id';
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://bookshelf-scanner-ecs7036.onrender.com';
 
 function bookKey(book) {
   return `${book.title}::${book.author}`;
