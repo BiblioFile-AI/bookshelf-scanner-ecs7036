@@ -8,7 +8,6 @@ from flask import Flask, request, jsonify
 # important functions from Katies and Emmas code 
 import knn
 import main_pipeline
-import metadata_lookup
 import shelf_reader
 from storage import load_profile, save_profile, normalize_book
 
@@ -49,51 +48,6 @@ def _to_frontend(book):
         "rank":        book.get("rank"),
         "is_top_pick": book.get("is_top_pick", False),
     }
-
-
-
-# Profile vector builder
-# main_pipeline.prep_recommendation_data returns only scanned book vectors.
-# This helper runs the same metadata + genre + scaler steps for the saved
-# profile books so KNN has something to compare against.
-# API calls are cached, so if the pipeline already fetched a book this run
-# the second call hits the cache and costs nothing.
-
-def _build_profile_vectors(profile_books):
-    profile_tuples = [
-        (b.get("title") or b.get("query_title", ""),
-         b.get("authors") or b.get("query_author", ""))
-        for b in profile_books
-    ]
-    raw_df     = metadata_lookup.build_metadata_table(profile_tuples, api_keys=metadata_lookup.API_KEYS)
-    full_df    = metadata_lookup.apply_fallback(raw_df)
-    profile_df, _ = metadata_lookup.apply_missing_data_policy(full_df)
-
-    if profile_df.empty:
-        return None
-
-    books_for_genre = [
-        {"title": row["query_title"], "authors": row.get("query_author", "")}
-        for _, row in profile_df.iterrows()
-    ]
-    genre_results = shelf_reader.classify_books_batch(books_for_genre)
-    genre_labels = [
-        genre_results.get(
-            f"{row['query_title']} by {row['query_author']}".lower().strip(),
-            "General & Contemporary Fiction"
-        )
-        for _, row in profile_df.iterrows()
-    ]
-
-    profile_authors = list(profile_df["authors"].dropna().unique())
-    scaler          = metadata_lookup.fit_profile_scaler(profile_df)
-
-    return metadata_lookup.build_feature_vectors(
-        df=profile_df,
-        genre_labels=genre_labels,
-        profile_authors=profile_authors,
-        scaler=scaler,
-    ).to_numpy()
 
 
 
@@ -142,16 +96,13 @@ def scan():
     profile       = load_profile(user_id)
     profile_books = profile["books"]
 
-    # Use a placeholder if the profile is empty so the pipeline can still
-    # fit the scaler; knn.rank_books handles None saved_vectors gracefully
-    profile_input = profile_books if profile_books else [{"title": "Unknown", "authors": "Unknown"}]
-
-    # Pipeline builds scanned book vectors; profile vectors are built separately
-    clean_df, scanned_vectors_df = main_pipeline.prep_recommendation_data(
-        raw_books, profile_input
+    # Pipeline builds vectors for BOTH the scanned shelf and the saved
+    # profile in one pass, on the same fitted scaler; saved_vectors is
+    # None when the profile is empty (knn.rank_books handles that gracefully)
+    clean_df, scanned_vectors_df, saved_vectors = main_pipeline.prep_recommendation_data(
+        raw_books, profile_books
     )
 
-    saved_vectors   = _build_profile_vectors(profile_books) if profile_books else None
     scanned_vectors = scanned_vectors_df.to_numpy()
     scanned_list    = clean_df.to_dict(orient="records")
 
