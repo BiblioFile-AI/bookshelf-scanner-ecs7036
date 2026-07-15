@@ -39,10 +39,15 @@ def handle_preflight():
 def _to_frontend(book):
     pub_date = book.get("publishedDate") or ""
     year_match = re.search(r"\d{4}", str(pub_date))
+    # "Unknown" is a real value the AI classifier can return (low confidence,
+    # or the whole batch call failed) - treat it as missing so we still fall
+    # back to Google Books' raw category text instead of showing nothing useful.
+    genre_label = book.get("genre_label")
+    genre = genre_label if genre_label and genre_label != "Unknown" else (book.get("categories") or "Unknown")
     return {
         "title":       book.get("title"),
         "author":      book.get("authors"),          # authors     -> author
-        "genre":       book.get("genre_label") or book.get("categories"),  # AI-classified genre, falls back to raw category text
+        "genre":       genre,
         "year":        int(year_match.group()) if year_match else None,
         "pages":       book.get("pageCount"),        # pageCount   -> pages
         "rank":        book.get("rank"),

@@ -81,6 +81,24 @@ async function syncProfileToBackend() {
   }
 }
 
+// Same idea, for a single book saved (starred) from scan results. Without
+// this, a saved scan book only ever lived in localStorage and never became
+// part of the server-side profile the KNN ranker builds vectors from.
+async function syncSavedBookToBackend(book) {
+  try {
+    await fetch(`${API_BASE}/onboard`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: getUserId(),
+        books: [{ title: book.title, author: book.author }],
+      }),
+    });
+  } catch (err) {
+    console.error('Saved book profile sync failed:', err);
+  }
+}
+
 // Saved scans (starred from results)
 function getSavedBooks() {
   const raw = localStorage.getItem(SAVED_KEY);
@@ -265,7 +283,7 @@ function createBookCard(book) {
   const saved = isBookSaved(book);
   card.innerHTML = `
     <button class="card-star${saved ? ' saved' : ''}" aria-label="Save book">${saved ? '★' : '☆'}</button>
-    ${book.is_top_pick ? '<span class="top-pick-badge">TOP PICK</span>' : ''}
+    ${book.is_top_pick ? `<span class="top-pick-badge">#${book.rank} Pick</span>` : ''}
     <span class="book-title">${book.title}</span>
     <span class="book-author">${book.author}</span>
     <span class="book-meta">${book.genre || 'Unknown Genre'} · ${book.year || 'N/A'} · ${book.pages || '?'} pp</span>
@@ -277,8 +295,12 @@ function createBookCard(book) {
     e.stopPropagation();
     const nowSaved = star.classList.toggle('saved');
     star.textContent = nowSaved ? '★' : '☆';
-    if (nowSaved) saveBook(book);
-    else unsaveBook(book);
+    if (nowSaved) {
+      saveBook(book);
+      syncSavedBookToBackend(book);
+    } else {
+      unsaveBook(book);
+    }
   });
 
   return card;

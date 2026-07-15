@@ -145,7 +145,7 @@ def rank_books(saved_vectors, scanned_vectors, scanned_books):
         for i, book in enumerate(scanned_books):
             entry = dict(book)
             entry["rank"] = i + 1
-            entry["is_top_pick"] = (i == 0)
+            entry["is_top_pick"] = (i < 3)
             results.append(entry)
         return results
 
@@ -167,8 +167,11 @@ def rank_books(saved_vectors, scanned_vectors, scanned_books):
     results = [dict(book) for book in scanned_books]
     for rank, idx in enumerate(ranked_order, start=1):
         results[idx]["rank"] = rank
-        results[idx]["is_top_pick"] = (rank == 1)
+        results[idx]["is_top_pick"] = (rank <= 3)
 
+    # Sort best-match-first so the ranking is reflected in the returned
+    # order, not just in the 'rank' field.
+    results.sort(key=lambda b: b["rank"])
     return results
 
 
