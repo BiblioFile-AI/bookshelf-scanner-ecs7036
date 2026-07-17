@@ -56,14 +56,34 @@ def _to_frontend(book):
     }
 
 
-# Identity key for exact-match comparisons between a scanned book and a
-# saved profile book. Falls back to the enriched title/authors if the raw
-# query fields aren't present (e.g. book dicts built downstream in the
-# pipeline), so both sides of the comparison use whichever fields they have.
+# Identity for matching a scanned book against a saved profile book.
+# Prefers the enriched Google Books title/authors over the raw scanned/typed
+# text - two different raw inputs for the same real book (a spine read as
+# "IT" vs a search typed as "It") both resolve to the same canonical Google
+# Books record, so matching on the enriched fields is far more reliable.
+# Falls back to the raw query fields when enrichment never happened.
+def _normalize_title(title):
+    title = title.strip().lower()
+    title = title.split(":")[0]  # drop subtitles, e.g. "It: A Novel" -> "it"
+    title = re.sub(r"[^\w\s]", "", title)  # drop punctuation
+    return re.sub(r"\s+", " ", title).strip()
+
 def _book_identity_key(book):
-    title  = book.get("query_title") or book.get("title") or ""
-    author = book.get("query_author") or book.get("authors") or ""
-    return f"{title.strip().lower()}|{author.strip().lower()}"
+    title  = _normalize_title(book.get("title") or book.get("query_title") or "")
+    author = (book.get("authors") or book.get("query_author") or "").strip().lower()
+    return title, author
+
+def _is_same_book(key_a, key_b):
+    title_a, author_a = key_a
+    title_b, author_b = key_b
+    if not title_a or title_a != title_b:
+        return False
+    # If either side never captured an author (e.g. vision couldn't read
+    # one off the spine), a title match alone is good enough - requiring
+    # both would silently miss an otherwise obvious match.
+    if not author_a or not author_b:
+        return True
+    return author_a == author_b
 
 
 
@@ -124,13 +144,13 @@ def scan():
 
     ranked = knn.rank_books(saved_vectors, scanned_vectors, scanned_list)
 
-    # A scanned book that's an exact (title, author) match for something
-    # already in the saved profile isn't a fresh recommendation - flag it
-    # instead of letting it win a "Top Pick" badge for a book the user
-    # already has.
-    saved_keys = {_book_identity_key(b) for b in profile_books}
+    # A scanned book that matches something already in the saved profile
+    # isn't a fresh recommendation - flag it instead of letting it win a
+    # "Top Pick" badge for a book the user already has.
+    saved_keys = [_book_identity_key(b) for b in profile_books]
     for book in ranked:
-        if _book_identity_key(book) in saved_keys:
+        book_key = _book_identity_key(book)
+        if any(_is_same_book(book_key, sk) for sk in saved_keys):
             book["already_saved"] = True
             book["is_top_pick"] = False
         else:
