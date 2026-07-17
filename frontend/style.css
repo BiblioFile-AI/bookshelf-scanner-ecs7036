@@ -192,6 +192,12 @@ h1 { font-size: 24px; font-weight: 600; text-align: center; }
   margin-bottom: 4px;
 }
 
+/* Informational, not a recommendation - deliberately not the gold accent look */
+.already-saved-badge {
+  background: var(--text-secondary);
+  color: var(--surface);
+}
+
 .book-title {
   font-size: 17px;
   font-weight: 600;

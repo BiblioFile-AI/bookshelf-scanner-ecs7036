@@ -458,34 +458,39 @@ def apply_missing_data_policy(df):
     return df, dropped
 
 #FEATURE VECTOR
-# The ten genre labels, exact spelling confirmed with Katy. The list
-# position of each label is its index 0-9, and that index order must
-# match Alexa's similarity matrix below - do not reorder either side.
+# EXPERIMENTAL (genre-split-and-library-flag branch): Horror added, and the
+# old combined "Science Fiction & Fantasy" split into two genres - 12 labels
+# total instead of 10. The list position of each label is its index 0-11,
+# and that index order must match the similarity matrix below - do not
+# reorder either side. knn.py keeps an identical copy of both.
 GENRE_LABELS = [
     "Romance",                          # 0
     "Mystery, Thriller & Crime",        # 1
-    "Science Fiction & Fantasy",        # 2
-    "Children",                         # 3
-    "Young Adult",                      # 4
-    "Biography & Memoir",               # 5
-    "History & Politics",               # 6
-    "Science, Tech & Nature",           # 7
-    "Self-Help & Lifestyle",            # 8
-    "General & Contemporary Fiction",   # 9
+    "Science Fiction",                  # 2
+    "Fantasy",                          # 3
+    "Horror",                           # 4
+    "Children",                         # 5
+    "Young Adult",                      # 6
+    "Biography & Memoir",               # 7
+    "History & Politics",               # 8
+    "Science, Tech & Nature",           # 9
+    "Self-Help & Lifestyle",            # 10
+    "General & Contemporary Fiction",   # 11
 ]
 
 GENRE_TO_INDEX = {label: i for i, label in enumerate(GENRE_LABELS)}
 
 def _build_similarity_matrix():
-    """Alexa's genre similarity matrix (agreed group code, do not edit).
+    """Genre similarity matrix (12x12 - see GENRE_LABELS note above).
 
-    10x10, symmetric: 1.0 on the diagonal (same genre), 0.1 default for
+    12x12, symmetric: 1.0 on the diagonal (same genre), 0.1 default for
     unrelated pairs, hand-set values for genres that share readers.
-    Her ranker uses it to score the genre part of the distance between
-    two books via their genre indices.
+    The Science Fiction <-> Fantasy pair and every Horror pair are new
+    judgment calls made when splitting/adding these genres - review
+    before this reaches main, they haven't been agreed with the team.
     """
     # Start with 0.1 for every pair (the "unrelated" default).
-    matrix = np.full((10, 10), 0.1)
+    matrix = np.full((12, 12), 0.1)
     # Same genre is perfectly similar.
     np.fill_diagonal(matrix, 1.0)
 
@@ -493,25 +498,34 @@ def _build_similarity_matrix():
     # Each tuple is (genre_index_A, genre_index_B, similarity_score).
     # The matrix is symmetric so we set both [i][j] and [j][i].
     explicit_pairs = [
-        (0, 9, 0.6),   # Romance <-> General Fiction
-        (0, 4, 0.5),   # Romance <-> Young Adult
-        (0, 8, 0.2),   # Romance <-> Self Help
-        (1, 6, 0.4),   # Mystery/Thriller <-> History
-        (1, 9, 0.4),   # Mystery/Thriller <-> General Fiction
-        (1, 2, 0.3),   # Mystery/Thriller <-> SciFi/Fantasy
-        (1, 5, 0.2),   # Mystery/Thriller <-> Biography
-        (2, 4, 0.6),   # SciFi/Fantasy <-> Young Adult
-        (2, 3, 0.4),   # SciFi/Fantasy <-> Children
-        (2, 7, 0.4),   # SciFi/Fantasy <-> SciTech
-        (3, 4, 0.5),   # Children <-> Young Adult
-        (4, 9, 0.5),   # Young Adult <-> General Fiction
-        (5, 6, 0.7),   # Biography <-> History
-        (5, 7, 0.4),   # Biography <-> SciTech
-        (5, 8, 0.3),   # Biography <-> Self Help
-        (6, 7, 0.4),   # History <-> SciTech
-        (6, 9, 0.3),   # History <-> General Fiction
-        (7, 8, 0.3),   # SciTech <-> Self Help
-        (8, 9, 0.2),   # Self Help <-> General Fiction
+        (0, 11, 0.6),  # Romance <-> General Fiction
+        (0, 6, 0.5),   # Romance <-> Young Adult
+        (0, 10, 0.2),  # Romance <-> Self Help
+        (1, 8, 0.4),   # Mystery/Thriller <-> History
+        (1, 11, 0.4),  # Mystery/Thriller <-> General Fiction
+        (1, 2, 0.3),   # Mystery/Thriller <-> Science Fiction
+        (1, 3, 0.3),   # Mystery/Thriller <-> Fantasy
+        (1, 4, 0.5),   # Mystery/Thriller <-> Horror
+        (1, 7, 0.2),   # Mystery/Thriller <-> Biography
+        (2, 3, 0.6),   # Science Fiction <-> Fantasy (formerly one genre)
+        (2, 6, 0.6),   # Science Fiction <-> Young Adult
+        (2, 5, 0.3),   # Science Fiction <-> Children
+        (2, 9, 0.4),   # Science Fiction <-> SciTech
+        (2, 4, 0.3),   # Science Fiction <-> Horror
+        (3, 6, 0.6),   # Fantasy <-> Young Adult
+        (3, 5, 0.5),   # Fantasy <-> Children
+        (3, 4, 0.4),   # Fantasy <-> Horror
+        (4, 11, 0.3),  # Horror <-> General Fiction
+        (4, 6, 0.2),   # Horror <-> Young Adult
+        (5, 6, 0.5),   # Children <-> Young Adult
+        (6, 11, 0.5),  # Young Adult <-> General Fiction
+        (7, 8, 0.7),   # Biography <-> History
+        (7, 9, 0.4),   # Biography <-> SciTech
+        (7, 10, 0.3),  # Biography <-> Self Help
+        (8, 9, 0.4),   # History <-> SciTech
+        (8, 11, 0.3),  # History <-> General Fiction
+        (9, 10, 0.3),  # SciTech <-> Self Help
+        (10, 11, 0.2), # Self Help <-> General Fiction
     ]
 
     for i, j, sim in explicit_pairs:
@@ -523,12 +537,12 @@ def _build_similarity_matrix():
 GENRE_SIMILARITY = _build_similarity_matrix()
 
 def genre_to_index(label):
-    """Translate Katy's genre label into its matrix index (0-9).
+    """Translate Katy's genre label into its matrix index (0-11).
 
     The spelling must match GENRE_LABELS exactly - that is the agreed
     interface between her classifier and this step. An unknown label
-    falls back to General & Contemporary Fiction (index 9) with a loud
-    warning, so one upstream typo cannot crash the whole ranking.
+    falls back to General & Contemporary Fiction with a loud warning,
+    so one upstream typo cannot crash the whole ranking.
     """
 
     if label in GENRE_TO_INDEX:

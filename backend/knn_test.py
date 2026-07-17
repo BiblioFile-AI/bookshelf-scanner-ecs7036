@@ -10,11 +10,12 @@ from knn import rank_books
 if __name__ == "__main__":
 
     # Shorthand genre indices for readability in the test vectors below.
-    SCIFI   = 2   # Science Fiction & Fantasy
-    MYSTERY = 1   # Mystery, Thriller & Crime
-    YA      = 4   # Young Adult
-    BIO     = 5   # Biography & Memoir
-    GENERAL = 9   # General & Contemporary Fiction
+    # Indices match the 12-genre scheme (genre-split-and-library-flag branch).
+    SCIFI   = 2    # Science Fiction
+    MYSTERY = 1    # Mystery, Thriller & Crime
+    YA      = 6    # Young Adult
+    BIO     = 7    # Biography & Memoir
+    GENERAL = 11   # General & Contemporary Fiction
 
     # Profile stats used to compute z-scores manually:
     MEAN_PAGES, STD_PAGES = 483, 160
@@ -47,8 +48,8 @@ if __name__ == "__main__":
     ], dtype=float)
 
     scanned_books = [
-        {"title": "Artemis",          "categories": "Science Fiction & Fantasy"},
-        {"title": "Red Rising",       "categories": "Science Fiction & Fantasy"},
+        {"title": "Artemis",          "categories": "Science Fiction"},
+        {"title": "Red Rising",       "categories": "Science Fiction"},
         {"title": "Big Little Lies",  "categories": "Mystery, Thriller & Crime"},
         {"title": "The Hunger Games", "categories": "Young Adult"},
         {"title": "Educated",         "categories": "Biography & Memoir"},

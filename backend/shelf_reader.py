@@ -43,17 +43,21 @@ IMAGE_CACHE_FILE = "../data/image_extraction_cache.json"
 GENRE_CACHE_FILE = "../data/genre_classification_cache.json"
 RATE_LIMIT_DELAY = 1.0  
 
-#10 official categories for the app:
+#12 official categories for the app:
+#EXPERIMENTAL (genre-split-and-library-flag branch): Horror added, and the
+#old combined "Science Fiction & Fantasy" split into two genres.
 OFFICIAL_GENRES = [
-    "General & Contemporary Fiction", 
-    "Romance", 
-    "Mystery, Thriller & Crime", 
-    "Science Fiction & Fantasy", 
-    "Science, Tech & Nature", 
-    "Young Adult", 
-    "Children", 
-    "Biography & Memoir", 
-    "History & Politics", 
+    "General & Contemporary Fiction",
+    "Romance",
+    "Mystery, Thriller & Crime",
+    "Science Fiction",
+    "Fantasy",
+    "Horror",
+    "Science, Tech & Nature",
+    "Young Adult",
+    "Children",
+    "Biography & Memoir",
+    "History & Politics",
     "Self-Help & Lifestyle"
 ]
 

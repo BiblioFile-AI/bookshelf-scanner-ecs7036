@@ -45,14 +45,25 @@ def _to_frontend(book):
     genre_label = book.get("genre_label")
     genre = genre_label if genre_label and genre_label != "Unknown" else (book.get("categories") or "Unknown")
     return {
-        "title":       book.get("title"),
-        "author":      book.get("authors"),          # authors     -> author
-        "genre":       genre,
-        "year":        int(year_match.group()) if year_match else None,
-        "pages":       book.get("pageCount"),        # pageCount   -> pages
-        "rank":        book.get("rank"),
-        "is_top_pick": book.get("is_top_pick", False),
+        "title":         book.get("title"),
+        "author":        book.get("authors"),          # authors     -> author
+        "genre":         genre,
+        "year":          int(year_match.group()) if year_match else None,
+        "pages":         book.get("pageCount"),        # pageCount   -> pages
+        "rank":          book.get("rank"),
+        "is_top_pick":   book.get("is_top_pick", False),
+        "already_saved": book.get("already_saved", False),
     }
+
+
+# Identity key for exact-match comparisons between a scanned book and a
+# saved profile book. Falls back to the enriched title/authors if the raw
+# query fields aren't present (e.g. book dicts built downstream in the
+# pipeline), so both sides of the comparison use whichever fields they have.
+def _book_identity_key(book):
+    title  = book.get("query_title") or book.get("title") or ""
+    author = book.get("query_author") or book.get("authors") or ""
+    return f"{title.strip().lower()}|{author.strip().lower()}"
 
 
 
@@ -112,6 +123,18 @@ def scan():
     scanned_list    = clean_df.to_dict(orient="records")
 
     ranked = knn.rank_books(saved_vectors, scanned_vectors, scanned_list)
+
+    # A scanned book that's an exact (title, author) match for something
+    # already in the saved profile isn't a fresh recommendation - flag it
+    # instead of letting it win a "Top Pick" badge for a book the user
+    # already has.
+    saved_keys = {_book_identity_key(b) for b in profile_books}
+    for book in ranked:
+        if _book_identity_key(book) in saved_keys:
+            book["already_saved"] = True
+            book["is_top_pick"] = False
+        else:
+            book["already_saved"] = False
 
     return jsonify({
         "scan_id": str(uuid.uuid4()),

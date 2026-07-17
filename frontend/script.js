@@ -280,10 +280,11 @@ function createBookCard(book) {
   card.target = '_blank';
   card.rel = 'noopener';
 
-  const saved = isBookSaved(book);
+  const saved = isBookSaved(book) || book.already_saved;
   card.innerHTML = `
     <button class="card-star${saved ? ' saved' : ''}" aria-label="Save book">${saved ? '★' : '☆'}</button>
-    ${book.is_top_pick ? `<span class="top-pick-badge">#${book.rank} Pick</span>` : ''}
+    ${book.already_saved ? '<span class="top-pick-badge already-saved-badge">Already saved in library</span>'
+      : book.is_top_pick ? `<span class="top-pick-badge">#${book.rank} Pick</span>` : ''}
     <span class="book-title">${book.title}</span>
     <span class="book-author">${book.author}</span>
     <span class="book-meta">${book.genre || 'Unknown Genre'} · ${book.year || 'N/A'} · ${book.pages || '?'} pp</span>
