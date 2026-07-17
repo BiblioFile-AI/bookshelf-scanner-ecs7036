@@ -142,19 +142,35 @@ def scan():
     scanned_vectors = scanned_vectors_df.to_numpy()
     scanned_list    = clean_df.to_dict(orient="records")
 
-    ranked = knn.rank_books(saved_vectors, scanned_vectors, scanned_list)
+    # Split out scanned books that are already in the saved profile BEFORE
+    # ranking, so they never compete for "Top Pick" against genuinely new
+    # books - KNN only ever sees the new ones, and the already-saved ones
+    # are appended after, demoted to the bottom instead of just relabelled
+    # in place.
+    saved_keys   = [_book_identity_key(b) for b in profile_books]
+    already_mask = [
+        any(_is_same_book(_book_identity_key(b), sk) for sk in saved_keys)
+        for b in scanned_list
+    ]
+    new_indices   = [i for i, saved in enumerate(already_mask) if not saved]
+    saved_indices = [i for i, saved in enumerate(already_mask) if saved]
 
-    # A scanned book that matches something already in the saved profile
-    # isn't a fresh recommendation - flag it instead of letting it win a
-    # "Top Pick" badge for a book the user already has.
-    saved_keys = [_book_identity_key(b) for b in profile_books]
-    for book in ranked:
-        book_key = _book_identity_key(book)
-        if any(_is_same_book(book_key, sk) for sk in saved_keys):
-            book["already_saved"] = True
-            book["is_top_pick"] = False
-        else:
-            book["already_saved"] = False
+    new_books   = [scanned_list[i] for i in new_indices]
+    new_vectors = scanned_vectors[new_indices]
+
+    ranked_new = knn.rank_books(saved_vectors, new_vectors, new_books)
+    for book in ranked_new:
+        book["already_saved"] = False
+
+    already_saved_books = []
+    for offset, i in enumerate(saved_indices, start=1):
+        book = dict(scanned_list[i])
+        book["rank"] = len(ranked_new) + offset
+        book["is_top_pick"] = False
+        book["already_saved"] = True
+        already_saved_books.append(book)
+
+    ranked = ranked_new + already_saved_books
 
     return jsonify({
         "scan_id": str(uuid.uuid4()),
