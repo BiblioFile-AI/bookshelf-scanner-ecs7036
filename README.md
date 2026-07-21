@@ -225,10 +225,10 @@ extension, or `python -m http.server`). Opening the file directly via
 No publicly available dataset is used. Two self-generated data assets
 are included in the submitted code archive:
 
-- **Genre similarity matrix** — a hand-crafted 10×10 matrix scoring
+- **Genre similarity matrix** - a hand-crafted 10×10 matrix scoring
   similarity between genre pairs, used in place of one-hot encoding for
   the KNN's genre feature.
-- **API response cache** — cached Google Books / Open Library responses
+- **API response cache** - cached Google Books / Open Library responses
   from a 32-book test set, used to evaluate metadata coverage (see the
   Results and Discussion section of the project report).
 
@@ -238,7 +238,7 @@ are included in the submitted code archive:
 
 | Name    | Role                                                                  |
 | ------- | ---------------------------------------------------------------------- |
-| Katy    | LLM prompt design — vision extraction and genre classification         |
+| Katy    | LLM prompt design & vision extraction and genre classification         |
 | Emma    | Google Books / Open Library integration, feature vector construction   |
 | Alexa   | Flask backend, KNN recommender logic, storage                          |
 | Anna    | Figma design system, CSS/HTML/JS front-end implementation              |
