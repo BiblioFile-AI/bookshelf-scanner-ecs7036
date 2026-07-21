@@ -173,8 +173,8 @@ the user reviews and further detail with one tap.
 
 - Python 3.10+
 - A modern web browser
-- A free [Gemini API key](https://aistudio.google.com/apikey)
-- A free [Google Books API key](https://console.cloud.google.com/)
+- Four free [Gemini API keys](https://aistudio.google.com/apikey) (the app rotates across up to four keys to handle free-tier rate limits; one is enough to run, but fewer keys means faster quota exhaustion)
+- Four free [Google Books API keys](https://console.cloud.google.com/) (same rotation logic; one is sufficient to run)
 
 ### Backend
 
@@ -183,15 +183,23 @@ cd backend
 pip install -r requirements.txt --break-system-packages
 ```
 
-Create a `.env` file in `backend/` with your API keys (see
-`.env.example`):
+Create a `.env` file inside `backend/` (see `.env.example`) with your API keys:
 
 ```
-GEMINI_API_KEY=your_key_here
-GOOGLE_BOOKS_API_KEY=your_key_here
+GEMINI_API_KEY_1=your_key_here
+GEMINI_API_KEY_2=
+GEMINI_API_KEY_3=
+GEMINI_API_KEY_4=
+
+GOOGLE_BOOKS_API_KEY_1=your_key_here
+GOOGLE_BOOKS_API_KEY_2=
+GOOGLE_BOOKS_API_KEY_3=
+GOOGLE_BOOKS_API_KEY_4=
 ```
 
-Run the server:
+Only the first key of each is required to run the app. The remaining slots can be left blank and are used for automatic rotation if you have additional keys.
+
+Run the server from inside the `backend/` directory, so the relative data paths (`../data/api_cache.json`, etc.) resolve correctly:
 
 ```bash
 python app.py
@@ -203,20 +211,19 @@ python app.py
 cd frontend
 ```
 
-Serve `index.html` with a local server (e.g. VS Code's Live Server
-extension, or `python -m http.server`). Opening the file directly via
-`file://` will not work, as the app fetches local JSON over `fetch()`.
+Serve `index.html` with a local server (e.g. VS Code's Live Server extension, or `python -m http.server`). Opening the file directly via `file://` will not work, as the app fetches local JSON over `fetch()`.
+
+**Note:** `script.js` currently points `API_BASE` at the deployed backend (`https://bookshelf-scanner-ecs7036.onrender.com`). To test the frontend against a locally running backend instead, change this line in `script.js` to `http://localhost:5000` before serving.
 
 ### Full application
 
-1. Start the backend.
+1. Start the backend (from `backend/`).
 2. Serve the frontend.
-3. Open the frontend URL in a browser (or on a phone, for camera
-   testing).
+3. Open the frontend URL in a browser (or on a phone, for camera testing).
 4. Complete onboarding with 3–10 books you've enjoyed.
 5. Scan a shelf to see ranked recommendations.
 
-**Live deployment:** `https://bibliofileai.netlify.app/`
+**Live deployment:** https://bibliofileai.netlify.app/
 
 ---
 
@@ -247,17 +254,19 @@ are included in the submitted code archive:
 
 ## Future Enhancements
 
-- Deployment hardening for concurrent users
-- Collaborative filtering across users with similar taste profiles
-- Shelf memory, to avoid re-surfacing previously scanned books
-- Native camera capture improvements for low-light shelf photography
+- Make the app handle multiple users at once more reliably
+- Recommend books based on other users with similar taste, not just one person's own saved books
+- Improve photo capture in low light, so spines are easier to read
+- Add an in-app image quality check before a scan is sent, so a blurry photo can be flagged before it wastes an API call
+- Move to paid persistent storage, or a lightweight database, so saved profiles survive
+- Speed up scans with a paid API tier, or by batching metadata requests instead of looking up each book sequentially
 
 ---
 
 ## Impact
 
-While artificial intelligence and digital intervention are often viewed
-as antithetical to the analog joy of reading, BiblioFile AI leverages
+While artificial intelligence might often be viewed
+as antithetical to the analog joy of reading, BiblioFile AI makes use of
 this technology to enhance the physical experience. It takes the
 overwhelming task out of browsing a bookshelf, making the act of
 browsing more personalised, and thus, more enjoyable.
