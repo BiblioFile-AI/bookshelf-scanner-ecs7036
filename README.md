@@ -216,7 +216,7 @@ extension, or `python -m http.server`). Opening the file directly via
 4. Complete onboarding with 3–10 books you've enjoyed.
 5. Scan a shelf to see ranked recommendations.
 
-**Live deployment:** `[INSERT NETLIFY / RENDER URLS]`
+**Live deployment:** `https://bibliofileai.netlify.app/`
 
 ---
 
