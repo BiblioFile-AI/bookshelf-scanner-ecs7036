@@ -17,7 +17,7 @@ from sklearn.neighbors import NearestNeighbors
 
 
 
-# Section 1: Genre taxonomy
+#Genre taxonomy
 
 GENRE_LABELS = [
     "Romance",                          # 0
@@ -34,10 +34,9 @@ GENRE_LABELS = [
 
 
 
-# Section 2: Genre similarity matrix
+#  Genre similarity matrix
 
 def _build_similarity_matrix():
-    # Every pair starts unrelated; the diagonal and explicit pairs override this.
     matrix = np.full((10, 10), 0.1)
     np.fill_diagonal(matrix, 1.0)
 
@@ -74,17 +73,15 @@ GENRE_SIMILARITY = _build_similarity_matrix()
 
 
 
-# Section 3: Custom distance function
+# Custom distance function
 # Vector layout ():
 #   v[0]  genre_index   : integer 0-9, looked up in GENRE_SIMILARITY
 #   v[1]  known_author  : 1.0 if author is in saved profile, else 0.0
 #   v[2]  pageCount_z   : z-score relative to profile mean/std
 #   v[3]  year_z        : z-score relative to profile mean/std
-#
 # Weights: genre 60%, known_author 20%, page 10%, year 10%.
-#
 # tanh squashes any positive value into (0,1):
-# This keeps the weights meaningful regardless of scale.
+
 
 def custom_distance(v1, v2):
     """
@@ -106,7 +103,7 @@ def custom_distance(v1, v2):
     return 0.6 * genre_dist + 0.2 * author_dist + 0.1 * page_dist + 0.1 * year_dist
 
 
-# Section 4: Main ranking function
+# Main ranking function
 
 def rank_books(saved_vectors, scanned_vectors, scanned_books):
     """
@@ -151,7 +148,7 @@ def rank_books(saved_vectors, scanned_vectors, scanned_books):
 
     k = min(3, len(saved_vectors))
 
-    # brute-force is required when using a callable metric.
+    # brute-force is required for custom distance function.
     knn = NearestNeighbors(n_neighbors=k, metric=custom_distance, algorithm="brute")
     knn.fit(saved_vectors)
 
@@ -169,7 +166,7 @@ def rank_books(saved_vectors, scanned_vectors, scanned_books):
         results[idx]["rank"] = rank
         results[idx]["is_top_pick"] = (rank <= 3)
 
-    # Sort best-match-first so the ranking is reflected in the returned
+    # Sort best match first so the ranking is reflected in the returned
     # order, not just in the 'rank' field.
     results.sort(key=lambda b: b["rank"])
     return results
