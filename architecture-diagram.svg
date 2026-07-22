@@ -1,0 +1,72 @@
+<svg width="640" height="960" viewBox="0 0 640 960" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>BiblioFile AI system architecture</title>
+<desc>A shelf photograph flows through the Gemini vision model, metadata lookup, genre classification, feature vector construction, and the KNN recommender, producing ranked results rendered by the frontend.</desc>
+
+<rect x="0" y="0" width="640" height="960" fill="#FAF6EF"/>
+
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#7A382E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+
+<style>
+.box { fill: #FFFFFF; stroke: #7A382E; stroke-width: 1.5; }
+.title { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 19px; font-weight: 600; fill: #2B2622; }
+.sub { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 14px; fill: #6A6078; }
+.arr { stroke: #7A382E; stroke-width: 1.5; }
+</style>
+
+<line x1="320" y1="86" x2="320" y2="126" class="arr" marker-end="url(#arrow)"/>
+<line x1="320" y1="216" x2="320" y2="256" class="arr" marker-end="url(#arrow)"/>
+<line x1="320" y1="366" x2="320" y2="406" class="arr" marker-end="url(#arrow)"/>
+<line x1="320" y1="496" x2="320" y2="536" class="arr" marker-end="url(#arrow)"/>
+<line x1="320" y1="666" x2="320" y2="706" class="arr" marker-end="url(#arrow)"/>
+<line x1="320" y1="836" x2="320" y2="876" class="arr" marker-end="url(#arrow)"/>
+
+<g>
+<rect x="120" y="30" width="400" height="56" rx="10" class="box"/>
+<text x="320" y="52" text-anchor="middle" class="title">Shelf Photograph</text>
+<text x="320" y="74" text-anchor="middle" class="sub">Phone camera</text>
+</g>
+
+<g>
+<rect x="120" y="126" width="400" height="90" rx="10" class="box"/>
+<text x="320" y="152" text-anchor="middle" class="title">Gemini Vision Model</text>
+<text x="320" y="178" text-anchor="middle" class="sub">Title / author extraction</text>
+</g>
+
+<g>
+<rect x="120" y="256" width="400" height="110" rx="10" class="box"/>
+<text x="320" y="284" text-anchor="middle" class="title">Metadata Lookup</text>
+<text x="320" y="308" text-anchor="middle" class="sub">Google Books API (primary)</text>
+<text x="320" y="330" text-anchor="middle" class="sub">Open Library (fallback)</text>
+</g>
+
+<g>
+<rect x="120" y="406" width="400" height="90" rx="10" class="box"/>
+<text x="320" y="432" text-anchor="middle" class="title">Genre Classification</text>
+<text x="320" y="458" text-anchor="middle" class="sub">Gemini, zero-shot</text>
+</g>
+
+<g>
+<rect x="120" y="536" width="400" height="130" rx="10" class="box"/>
+<text x="320" y="566" text-anchor="middle" class="title">Feature Vectors</text>
+<text x="320" y="592" text-anchor="middle" class="sub">genre · known author ·</text>
+<text x="320" y="614" text-anchor="middle" class="sub">page count · year</text>
+</g>
+
+<g>
+<rect x="120" y="706" width="400" height="130" rx="10" class="box"/>
+<text x="320" y="736" text-anchor="middle" class="title">KNN Recommender</text>
+<text x="320" y="762" text-anchor="middle" class="sub">Custom weighted distance</text>
+<text x="320" y="784" text-anchor="middle" class="sub">(scikit-learn)</text>
+</g>
+
+<g>
+<rect x="120" y="876" width="400" height="70" rx="10" class="box"/>
+<text x="320" y="902" text-anchor="middle" class="title">Ranked Results</text>
+<text x="320" y="926" text-anchor="middle" class="sub">Flask JSON response → frontend rendering</text>
+</g>
+
+</svg>
