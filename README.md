@@ -30,8 +30,6 @@ Physical browsing can be tedious, and current existing tools do not fully fit wh
 - Manually searching every unfamiliar spine on a phone is slow and breaks the flow of browsing
 - Choices end up based on cover design or title alone, rather than genuine fit with a reader's taste
 
-This creates a gap between what's on the shelf and *what a reader might actually enjoy*.
-
 ---
 
 ## Solution
