@@ -1,6 +1,6 @@
 # BiblioFile AI
 
-### An AI-Powered Platform for Discovering Your Next Book from Any Physical Shelf
+### An AI-Powered Platform for Book Readers
 
 ![Flask](https://img.shields.io/badge/Flask-Backend-000000?style=flat&logo=flask)
 ![Gemini](https://img.shields.io/badge/Gemini-Vision%20%26%20Genre%20AI-8E75B2?style=flat)
@@ -13,9 +13,9 @@
 
 ## Overview
 
-BiblioFile AI is an AI-powered web application that helps readers discover their next book from any bookshelf, whether it is at a secondhand bookshop, or a friend's living room. Instead of manually searching each title, the user photographs the shelf and receives an instantly ranked list of every book detected, matched against their own taste profile.
+BiblioFile AI is an AI-powered web application that helps readers discover their next book from any bookshelf, whether it is at a secondhand bookshop, or a friend's living room. 
 
-The platform turns a wall of unfamiliar spines into a personalised shortlist, with direct links out to Goodreads for reviews, synopsis and further reading.
+Instead of manually searching each title, the user photographs the shelf and receives an instantly ranked list of every book detected, matched against their own taste profile, with direct links out to Goodreads for reviews, synopsis and further reading.
 
 Deployed: https://bibliofileai.netlify.app/
 
