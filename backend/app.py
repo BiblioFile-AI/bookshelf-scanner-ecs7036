@@ -14,10 +14,7 @@ from storage import load_profile, save_profile, normalize_book
 app = Flask(__name__)
 
 
-# CORS — lets the browser fetch from http://localhost:5000 regardless of
-# what origin the frontend HTML is served from (file://, live-server, etc.)
-
-
+# Lets the frontend (a different origin) read responses from this backend
 @app.after_request
 def add_cors_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
@@ -32,16 +29,14 @@ def handle_preflight():
     return jsonify({}), 200
 
 
-# Response serialiser
-# The pipeline stores books in Google Books field names; script.js expects
-# different keys. This function translates one book dict before sending it.
+# Converts one book from pipeline format to the format the frontend expects
 
 def _to_frontend(book):
+    # Pull the year out of the publish date string, e.g. "2020-03-15" -> 2020
     pub_date = book.get("publishedDate") or ""
     year_match = re.search(r"\d{4}", str(pub_date))
-    # "Unknown" is a real value the AI classifier can return (low confidence,
-    # or the whole batch call failed) - treat it as missing so we still fall
-    # back to Google Books' raw category text instead of showing nothing useful.
+    #  Use the AI-classified genre if there is one; otherwise fall back to
+    # Google Books' own category text
     genre_label = book.get("genre_label")
     genre = genre_label if genre_label and genre_label != "Unknown" else (book.get("categories") or "Unknown")
     return {
@@ -56,17 +51,12 @@ def _to_frontend(book):
 
 
 
-# Accepts a multipart upload:
-#   shelf_photo  — the bookshelf image (any common image format)
-#   user_id      — form field identifying whose profile to compare against
-#
-# Flow:
-#   1. Save image to a temp file
-#   2. shelf_reader extracts title+author pairs from the image via Gemini
-#   3. main_pipeline fetches metadata, classifies genres, builds feature vectors
-#      for BOTH the scanned books AND the user's saved profile
-#   4. knn.rank_books ranks the scanned books against the profile vectors
-#   5. Results are serialised to the field names script.js expects and returned
+#  Takes a bookshelf photo, runs the full pipeline, and returns ranked books
+# 1. Save the photo to a temp file
+# 2. shelf_reader reads titles and authors off the spines using Gemini
+# 3. main_pipeline fetches metadata, classifies genres, builds feature vectors
+# 4. knn.rank_books ranks the scanned books against the user's profile
+# 5. Convert the ranked books to frontend format and return them
 
 @app.route("/scan", methods=["POST"])
 def scan():
@@ -101,9 +91,8 @@ def scan():
     profile       = load_profile(user_id)
     profile_books = profile["books"]
 
-    # Pipeline builds vectors for BOTH the scanned shelf and the saved
-    # profile in one pass, on the same fitted scaler; saved_vectors is
-    # None when the profile is empty (knn.rank_books handles that gracefully)
+    # Builds feature vectors for both the scanned shelf and the saved profile
+    # saved_vectors is None if the profile is empty, knn.rank_books handles that
     clean_df, scanned_vectors_df, saved_vectors = main_pipeline.prep_recommendation_data(
         raw_books, profile_books
     )
@@ -121,10 +110,7 @@ def scan():
 
 
 
-# POST /onboard
-# Stores up to 10 book titles as minimal profile entries (no metadata).
-# These give the KNN something to compare against before the first real scan.
-
+# Saves up to 10 onboarding titles so the KNN has something to compare to
 
 @app.route("/onboard", methods=["POST"])
 def onboard():
@@ -145,9 +131,7 @@ def onboard():
     added        = 0
 
     for entry in books:
-        # Accept either a plain title string or a {title, author} object —
-        # the onboarding search UI knows the author; keeping it improves
-        # the metadata lookup Katherine's pipeline does downstream.
+      # Entry can be a plain title string or a {title, author} object
         if isinstance(entry, dict):
             title  = entry.get("title")
             author = entry.get("author") or entry.get("authors")
@@ -174,10 +158,8 @@ def onboard():
 
 
 
-# POST /save
-# Adds one fully-enriched book (Google Books format) to the user's profile.
-# Duplicate detection is by title — safe to call repeatedly.
 
+# Adds one book to the user's profile, skips it if the title is already saved
 
 @app.route("/save", methods=["POST"])
 def save():
@@ -212,7 +194,7 @@ def save():
 
 
 
-# GET /profile?user_id=<id>
+
 # Returns the user's saved book list.
 
 @app.route("/profile", methods=["GET"])
