@@ -101,51 +101,6 @@ Every result links directly to a title-scoped Goodreads search, giving the user 
 
 ![System architecture...](./architecture-diagram.svg)
 
-```
-┌─────────────────────┐
-│   Shelf Photograph    │
-│   (phone camera)      │
-└────────┬──────────────┘
-         ↓
-┌─────────────────────┐
-│  Gemini Vision Model   │
-│  Title/Author Extract  │
-└────────┬──────────────┘
-         ↓
-┌─────────────────────┐
-│  Metadata Lookup       │
-│  Google Books +        │
-│  Open Library Fallback │
-└────────┬──────────────┘
-         ↓
-┌─────────────────────┐
-│  Genre Classification  │
-│  Gemini (zero-shot)    │
-└────────┬──────────────┘
-         ↓
-┌─────────────────────┐
-│  Feature Vectors       │
-│  genre · author ·      │
-│  pages · year          │
-└────────┬──────────────┘
-         ↓
-┌─────────────────────┐
-│  KNN Recommender        │
-│  Custom weighted         │
-│  distance (scikit-learn) │
-└────────┬──────────────┘
-         ↓
-┌─────────────────────┐
-│  Ranked Results         │
-│  Flask JSON response    │
-└────────┬──────────────┘
-         ↓
-┌─────────────────────┐
-│  Frontend Rendering     │
-│  HTML/CSS/JS UI          │
-└─────────────────────┘
-```
-
 ---
 
 ## Setup and Running Instructions
