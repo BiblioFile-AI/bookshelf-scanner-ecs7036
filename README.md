@@ -23,8 +23,7 @@ Deployed: https://bibliofileai.netlify.app/
 
 ## Problem Statement
 
-Physical browsing is slow, and the tools that could help don't fit the
-moment:
+Physical browsing can be tedious, and current existing tools do not fully fit what is needed.
 
 - Existing platforms like Goodreads and LibraryThing recommend from a user's *entire reading history* against their own catalogue. They have
   no concept of which books are physically in front of the user in the moment
