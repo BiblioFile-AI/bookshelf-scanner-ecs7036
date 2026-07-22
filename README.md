@@ -99,6 +99,8 @@ Every result links directly to a title-scoped Goodreads search, giving the user 
 
 ## System Architecture
 
+![System architecture...](./architecture-diagram.svg)
+
 ```
 ┌─────────────────────┐
 │   Shelf Photograph    │
