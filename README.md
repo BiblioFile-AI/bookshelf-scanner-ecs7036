@@ -13,16 +13,11 @@
 
 ## Overview
 
-BiblioFile AI is an AI-powered web application that helps readers
-discover their next book from any bookshelf, whether it's at a charity
-shop, a secondhand bookshop, or a friend's living room. Instead of
-manually searching each unfamiliar title, the user photographs the shelf
-and receives an instantly ranked list of every book detected, matched
-against their own reading taste.
+BiblioFile AI is an AI-powered web application that helps readers discover their next book from any bookshelf, whether it is at a secondhand bookshop, or a friend's living room. Instead of manually searching each title, the user photographs the shelf and receives an instantly ranked list of every book detected, matched against their own taste profile.
 
-The platform turns a wall of unfamiliar spines into a personalised,
-navigable shortlist, with direct links out to Goodreads for reviews,
-synopsis and further reading.
+The platform turns a wall of unfamiliar spines into a personalised shortlist, with direct links out to Goodreads for reviews, synopsis and further reading.
+
+Deployed: https://bibliofileai.netlify.app/
 
 ---
 
@@ -31,23 +26,18 @@ synopsis and further reading.
 Physical browsing is slow, and the tools that could help don't fit the
 moment:
 
-- Existing platforms like Goodreads and LibraryThing recommend from a
-  user's *entire reading history* against their own catalogue — they have
-  no concept of which books are physically in front of the user right now
-- Manually searching every unfamiliar spine on a phone is slow and breaks
-  the flow of browsing
-- Choices end up based on cover design or title alone, rather than genuine
-  fit with a reader's taste
+- Existing platforms like Goodreads and LibraryThing recommend from a user's *entire reading history* against their own catalogue. They have
+  no concept of which books are physically in front of the user in the moment
+- Manually searching every unfamiliar spine on a phone is slow and breaks the flow of browsing
+- Choices end up based on cover design or title alone, rather than genuine fit with a reader's taste
 
-This creates a gap between what's on the shelf and *what a reader might
-actually enjoy*.
+This creates a gap between what's on the shelf and *what a reader might actually enjoy*.
 
 ---
 
 ## Solution
 
-BiblioFile AI closes that gap with a five-stage pipeline that goes from a
-single photograph to a personalised, ranked shortlist in seconds.
+BiblioFile AI closes that gap with a five-stage pipeline that goes from a single photograph to a personalised, ranked shortlist.
 
 The platform:
 
@@ -57,10 +47,7 @@ The platform:
 - Ranks the shelf against the user's own saved taste profile
 - Links every result straight through to Goodreads
 
-By combining computer vision, structured metadata retrieval, and a
-custom recommendation model, BiblioFile AI answers not just **what** is on
-the shelf, but **which of these books this specific reader is most likely
-to enjoy**.
+By combining computer vision, structured metadata retrieval, and a custom recommendation model, BiblioFile AI answers not just **what** is on the shelf, but **which of these books this specific reader is most likely to enjoy**.
 
 ---
 
@@ -68,28 +55,23 @@ to enjoy**.
 
 ### Shelf Scanning
 
-Photograph any bookshelf and receive a structured list of every book
-spine the model can read, extracted directly from the image.
+Photograph any bookshelf and receive a structured list of every book spine the model can read, extracted directly from the image.
 
 ### Personalised Ranking
 
-A K-Nearest-Neighbours recommender compares every detected book against
-the user's own taste profile and highlights the closest matches.
+A K-Nearest-Neighbours recommender compares every detected book against the user's own taste profile and highlights the closest matches.
 
 ### Taste Profile Onboarding
 
-New users seed their profile with 3–10 books they've already enjoyed,
-searchable and addable in seconds, and can keep adding to it at any time.
+New users seed their profile with 3-10 books they've already enjoyed, searchable and added within seconds.
 
 ### Save and Revisit
 
-Any book from a scan can be starred and revisited later from a personal
-library, separate from the onboarding taste profile.
+Any book from a scan can be starred and revisited later from a personal library, separate from the onboarding taste profile.
 
 ### Goodreads Deep-Linking
 
-Every result links directly to a title-scoped Goodreads search, giving
-the user reviews and further detail with one tap.
+Every result links directly to a title-scoped Goodreads search, giving the user reviews and further detail with one tap.
 
 ---
 
@@ -197,7 +179,7 @@ GOOGLE_BOOKS_API_KEY_3=
 GOOGLE_BOOKS_API_KEY_4=
 ```
 
-Only the first key of each is required to run the app. The remaining slots can be left blank and are used for automatic rotation if you have additional keys.
+Only the first key of each is required to run the app. The remaining slots can be left blank and are used for automatic rotation if you have additional keys. You will need to generate own API key for both Gemini and Google Books.
 
 Run the server from inside the `backend/` directory, so the relative data paths (`../data/api_cache.json`, etc.) resolve correctly:
 
@@ -229,15 +211,17 @@ Serve `index.html` with a local server (e.g. VS Code's Live Server extension, or
 
 ## Dataset
 
-No publicly available dataset is used. Two self-generated data assets
-are included in the submitted code archive:
+No publicly available dataset is used. 
 
-- **Genre similarity matrix** - a hand-crafted 10×10 matrix scoring
-  similarity between genre pairs, used in place of one-hot encoding for
-  the KNN's genre feature.
-- **API response cache** - cached Google Books / Open Library responses
-  from a 32-book test set, used to evaluate metadata coverage (see the
-  Results and Discussion section of the project report).
+This project synthesises its dataset by merging three data streams:
+
+- User profile: a baseline of self-reported books to establish a sense of the user’s reading preferences.
+
+- Active shelf data: Book titles and authors extracted from user uploaded bookshelf photos using a VLM.
+
+- Metadata from APIs: bibliographic details taken from Google Books and Open Library.
+
+This combined data is cached locally and used to inform our k-NN model.
 
 ---
 
@@ -265,13 +249,8 @@ are included in the submitted code archive:
 
 ## Impact
 
-While artificial intelligence might often be viewed
-as antithetical to the analog joy of reading, BiblioFile AI makes use of
-this technology to enhance the physical experience. It takes the
-overwhelming task out of browsing a bookshelf, making the act of
-browsing more personalised, and thus, more enjoyable.
+While artificial intelligence might often be viewed as *antithetical* to the simple joys of reading, BiblioFile AI makes use of this technology to actually enhance the physical experience. It takes the somewhat overwhelming task out of browsing a bookshelf, making the act of browsing more personalised, and thus, more enjoyable.
 
 ---
 
-*Developed for ECS7036P Applications of AI, Queen Mary University of
-London.*
+*Developed for ECS7036P Applications of AI, Queen Mary University of London.*
