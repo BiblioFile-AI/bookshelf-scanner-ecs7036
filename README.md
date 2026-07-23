@@ -105,12 +105,14 @@ Every result links directly to a title-scoped Goodreads search, giving the user 
 
 ## Setup and Running Instructions
 
+## Setup and Running Instructions
+
 ### Prerequisites
 
 - Python 3.10+
 - A modern web browser
-- Four free [Gemini API keys](https://aistudio.google.com/apikey) (the app rotates across up to four keys to handle free-tier rate limits; one is enough to run, but fewer keys means faster quota exhaustion)
-- Four free [Google Books API keys](https://console.cloud.google.com/) (same rotation logic; one is sufficient to run)
+- Up to four free [Gemini API keys](https://aistudio.google.com/apikey) (the app rotates across up to four keys to handle free-tier rate limits; one is enough to run, but fewer keys means faster quota exhaustion)
+- Up to four free [Google Books API keys](https://console.cloud.google.com/) (same rotation logic; one is sufficient to run)
 
 ### Backend
 
@@ -119,23 +121,21 @@ cd backend
 pip install -r requirements.txt --break-system-packages
 ```
 
-Create a `.env` file inside `backend/` (see `.env.example`) with your API keys:
+Create a `.env` file inside `backend/` with your API keys, using exactly these variable names:
 
-```
 GEMINI_API_KEY_1=your_key_here
 GEMINI_API_KEY_2=
 GEMINI_API_KEY_3=
 GEMINI_API_KEY_4=
-
 GOOGLE_BOOKS_API_KEY_1=your_key_here
 GOOGLE_BOOKS_API_KEY_2=
 GOOGLE_BOOKS_API_KEY_3=
 GOOGLE_BOOKS_API_KEY_4=
-```
 
-Only the first key of each is required to run the app. The remaining slots can be left blank and are used for automatic rotation if you have additional keys. You will need to generate own API key for both Gemini and Google Books.
 
-Run the server from inside the `backend/` directory, so the relative data paths (`../data/api_cache.json`, etc.) resolve correctly:
+Only the first key of each is required to run the app; the remaining slots can be left blank and are used for automatic rotation if you have additional keys. You will need to generate your own API keys for both Gemini and Google Books.
+
+Run the server from inside the `backend/` directory. The runtime caches (`../data/api_cache.json`, image and genre caches) are created at relative paths, so running from the project root will place them incorrectly:
 
 ```bash
 python app.py
