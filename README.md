@@ -103,7 +103,72 @@ Every result links directly to a title-scoped Goodreads search, giving the user 
 
 ---
 
-## Setup and Running Instructions
+## Code Structure
+
+```
+BiblioFileAI-Project-ECS7036/
+│
+├── backend/
+│   ├── app.py                  # Flask app entry point. Defines the /scan,
+│   │                             /onboard, /save, and /profile routes,
+│   │                             handles CORS, and translates pipeline
+│   │                             output into the JSON shape the frontend  expects.
+│   │                            
+│   ├── main_pipeline.py         # Orchestrates a full scan: calls
+│   │                             shelf_reader for vision + genre, then
+│   │                             metadata_lookup for both the scanned shelf and the user's saved profile.
+│   │                             
+│   ├── shelf_reader.py          # Gemini vision extraction and batch
+│   │                             genre classification, with image/genre caches and Gemini key rotation.
+│   │                             
+│   ├── metadata_lookup.py       # Google Books + Open Library metadata
+│   │                             retrieval, missing-data policy, and
+│   │                             feature vector construction. Contains the 10-genre taxonomy.
+│   │                             
+│   ├── knn.py                    # The k-NN recommender: custom weighted
+│   │                             distance function combining genre
+│   │                             similarity, known author, page count, and year.
+│   │                             
+│   ├── knn_test.py               # Tests for the KNN recommendation logic.
+│   ├── storage.py                # JSON-based persistence for user profiles.
+│   ├── requirements.txt
+│   └── runtime.txt               # Pins the Python version for Render
+│                                 deployment.
+│
+├── frontend/
+│   ├── index.html                # All app screens (welcome, onboarding,
+│   │                             scan, loading, results, error, empty, library), shown/hidden via JavaScript.
+│   │                             
+│   ├── style.css                  # Design tokens and component styling, carried over from the Figma design system.
+│   │                             
+│   ├── script.js                  # App logic: navigation, photo capture,
+│   │                             the /scan request, dynamic card
+│   │                             rendering, onboarding search, and localStorage-based state.
+│   │                           
+│   ├── mock_scan_response.json    # Mock backend response used during parallel front-end development.
+│   │                             
+│   ├── bg-scan.svg, bg-scanning.svg,
+│   │   bg-results.svg,
+│   │   open-book.svg, sad-face.svg  # Hand-drawn background and state illustrations.
+│   │                                 
+│   └── favicon / touch-icon assets
+│
+├── data/
+│   └── mock_shelf_test.jpeg       # Sample shelf photo used for local testing of the vision pipeline.
+│                                 
+│
+├── notebooks/
+│   └── 01_google_books_api.ipynb   # Exploratory test of Google Books /
+│                                 Open Library metadata coverage on a
+│                                 32-book test set.
+│
+├── architecture-diagram.svg        # System architecture figure used in this README.
+│                                
+│
+└── README.md
+```
+
+---
 
 ## Setup and Running Instructions
 
@@ -124,12 +189,19 @@ pip install -r requirements.txt --break-system-packages
 Create a `.env` file inside `backend/` with your API keys, using exactly these variable names:
 
 GEMINI_API_KEY_1=your_key_here
+
 GEMINI_API_KEY_2=
+
 GEMINI_API_KEY_3=
+
 GEMINI_API_KEY_4=
+
 GOOGLE_BOOKS_API_KEY_1=your_key_here
+
 GOOGLE_BOOKS_API_KEY_2=
+
 GOOGLE_BOOKS_API_KEY_3=
+
 GOOGLE_BOOKS_API_KEY_4=
 
 
@@ -159,7 +231,7 @@ Serve `index.html` with a local server (e.g. VS Code's Live Server extension, or
 4. Complete onboarding with 3–10 books you've enjoyed.
 5. Scan a shelf to see ranked recommendations.
 
-**Live deployment:** https://bibliofileai.netlify.app/
+OR Click for **Live deployment:** https://bibliofileai.netlify.app/
 
 ---
 
